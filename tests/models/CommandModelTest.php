@@ -1013,4 +1013,32 @@ class ControlModelTest extends CIUnit_TestCase {
 
 		$this->assertEquals($perms, $this->_cm->fetch_permissions($release->rid, $trigger->tid));
 	}
+
+	public function testSearchReturnsMatchingTrigger() {
+		$this->markTestIncomplete();
+	}
+
+	public function testSearchReturnsMatchingAlias() {
+		$this->markTestIncomplete();
+	}
+
+	public function testSearchReturnsMatchingInstrAndDesc() {
+		$this->markTestIncomplete();
+	}
+
+	public function testSearchPartialReturnsMultipleResults() {
+		$this->markTestIncomplete();
+	}
+
+	public function testSearchUnknownReturnsError() {
+		$this->markTestIncomplete();
+	}
+
+	public function testSearchSpecificReleaseValid() {
+		$this->markTestIncomplete();
+	}
+
+	public function testSearchSpecificReleaseInvalidReturnsError() {
+		$this->markTestIncomplete();
+	}
 }
