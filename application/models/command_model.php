@@ -814,8 +814,13 @@ class Command_model extends CI_Model {
 		$query = $this->db->query($sql);
 
 		$results = array();
+		$num_results = 0;
 		foreach($query->result() as $row) {
 			$results[] = $row;
+
+			if(++$num_results >= MAX_SEARCH_RESULTS) {
+				break;
+			}
 		}
 
 		return $results;
