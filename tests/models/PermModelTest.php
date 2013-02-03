@@ -3,19 +3,16 @@
  * @group Model
  */
 
-class PermModelTest extends CIUnit_TestCase
-{
+class PermModelTest extends CIUnit_TestCase {
 	private $_pm;
 	private $_deleted_perm;
-    private $_max_pid = 0;
+	private $_max_pid = 0;
 
-	public function __construct($name = NULL, array $data = array(), $dataName = '')
-	{
+	public function __construct($name = NULL, array $data = array(), $dataName = '') {
 		parent::__construct($name, $data, $dataName);
 	}
 
-	public function setUp()
-	{
+	public function setUp() {
 		parent::setUp();
 
 		$this->CI->load->model('Perm_model');
@@ -23,16 +20,16 @@ class PermModelTest extends CIUnit_TestCase
 		$this->dbfixt('cmd_perm');
 
 		$perms = array();
-		foreach($this->cmd_perm_fixt as $perm) {
+		foreach ($this->cmd_perm_fixt as $perm) {
 			$perms[$perm['pid']][] = (object)$perm;
-            $this->_max_pid = ($perm['pid'] > $this->_max_pid) ? $perm['pid'] : $this->_max_pid;
+			$this->_max_pid        = ($perm['pid'] > $this->_max_pid) ? $perm['pid'] : $this->_max_pid;
 		}
 
 		$this->cmd_perm_fixt = array();
-		$index = 0;
-		foreach($perms as $versions) {
+		$index               = 0;
+		foreach ($perms as $versions) {
 			$this->cmd_perm_fixt[$index] = array_reverse($versions);
-			if($this->cmd_perm_fixt[$index][0]->status == 0) {
+			if ($this->cmd_perm_fixt[$index][0]->status == 0) {
 				$this->_deleted_perm = $this->cmd_perm_fixt[$index][0];
 			}
 
@@ -71,39 +68,40 @@ class PermModelTest extends CIUnit_TestCase
 			'status'  => 1,
 		);
 
-		$this->assertEquals($expected, $this->_pm->insert(array('perm' => $expected->perm, 'pdesc' => $expected->pdesc)));
+		$this->assertEquals($expected,
+		                    $this->_pm->insert(array('perm' => $expected->perm, 'pdesc' => $expected->pdesc)));
 	}
 
 	public function testCreatePermCannotBeEmpty() {
 		$this->assertFalse($this->_pm->insert(array('perm' => '', 'pdesc' => 'Some Description')));
 	}
 
-    public function testAbilityClonePermValid() {
-        $original = $this->cmd_perm_fixt[0][0];
-        $expected = clone $original;
-        $expected->pid = $this->_max_pid+1;
-        $expected->version = 1;
+	public function testAbilityClonePermValid() {
+		$original          = $this->cmd_perm_fixt[0][0];
+		$expected          = clone $original;
+		$expected->pid     = $this->_max_pid + 1;
+		$expected->version = 1;
 
-        $this->assertEquals($expected, $this->_pm->clone_perm($original->pid, $original->version));
-    }
+		$this->assertEquals($expected, $this->_pm->clone_perm($original->pid, $original->version));
+	}
 
-    public function testInabilityClonePermInvalidPID() {
-        $original = $this->cmd_perm_fixt[0][0];
+	public function testInabilityClonePermInvalidPID() {
+		$original = $this->cmd_perm_fixt[0][0];
 
-        $this->assertFalse($this->_pm->clone_perm(1000, $original->version));
-    }
+		$this->assertFalse($this->_pm->clone_perm(1000, $original->version));
+	}
 
-    public function testInabilityClonePermInvalidVersion() {
-        $original = $this->cmd_perm_fixt[0][0];
+	public function testInabilityClonePermInvalidVersion() {
+		$original = $this->cmd_perm_fixt[0][0];
 
-        $this->assertFalse($this->_pm->clone_perm($original->pid, 1000));
-    }
+		$this->assertFalse($this->_pm->clone_perm($original->pid, 1000));
+	}
 
 	public function testAbilityEditPermValidPID() {
-		$expected = $this->cmd_perm_fixt[0][0];
+		$expected       = $this->cmd_perm_fixt[0][0];
 		$expected->perm = 'editted Perm';
-		$data = array(
-			'perm'    => $expected->perm,
+		$data           = array(
+			'perm' => $expected->perm,
 		);
 
 		$result = $this->_pm->edit($expected->pid, $expected->version, $data);
@@ -112,17 +110,17 @@ class PermModelTest extends CIUnit_TestCase
 
 	public function testEdditedPermCannotBeEmpty() {
 		$editted = $this->cmd_perm_fixt[0][0];
-		$data = array(
-			'pid' => $editted->pid,
+		$data    = array(
+			'pid'     => $editted->pid,
 			'version' => $editted->version,
-			'perm' => '',
+			'perm'    => '',
 		);
 		$this->assertFalse($this->_pm->edit($editted->pid, $editted->version, $data));
 	}
 
 	public function testInabilityEditDeletedPerm() {
 		$data = array(
-			'perm'    => 'edit',
+			'perm' => 'edit',
 		);
 
 		$this->assertFalse($this->_pm->edit($this->_deleted_perm->pid, $this->_deleted_perm->version, $data));
@@ -130,18 +128,18 @@ class PermModelTest extends CIUnit_TestCase
 
 	public function testVersionOfEdditedPermIncrements() {
 		$expected = $this->cmd_perm_fixt[0][0];
-		$data = array(
-			'perm'    => 'editted',
+		$data     = array(
+			'perm' => 'editted',
 		);
 
 		$result = $this->_pm->edit($expected->pid, $expected->version, $data);
-		$this->assertEquals($expected->version+1, $result->version);
+		$this->assertEquals($expected->version + 1, $result->version);
 	}
 
 	public function testAbilityEditDescription() {
 		$expected = $this->cmd_perm_fixt[0][0];
-		$data = array(
-			'pdesc'   => 'editted',
+		$data     = array(
+			'pdesc' => 'editted',
 		);
 
 		$result = $this->_pm->edit($expected->pid, $expected->version, $data);
@@ -150,7 +148,7 @@ class PermModelTest extends CIUnit_TestCase
 
 	public function testInabilityEditInvalidField() {
 		$expected = $this->cmd_perm_fixt[0][0];
-		$data = array(
+		$data     = array(
 			'invalid' => 'editted',
 		);
 
@@ -159,15 +157,15 @@ class PermModelTest extends CIUnit_TestCase
 
 	public function testInabilityEditStatusFieldDirectly() {
 		$expected = $this->cmd_perm_fixt[0][0];
-		$data = array(
-			'status'  => 0,
+		$data     = array(
+			'status' => 0,
 		);
 
 		$this->assertFalse($this->_pm->edit($expected->pid, $expected->version, $data));
 	}
 
 	public function testAbilityDeletePermValidPID() {
-		$deleted = $this->cmd_perm_fixt[0][0];
+		$deleted         = $this->cmd_perm_fixt[0][0];
 		$deleted->status = 0;
 
 		$this->assertEquals($deleted, $this->_pm->delete($deleted->pid, $deleted->version));
@@ -175,7 +173,7 @@ class PermModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityRestoreDeletedPerm() {
-		$expected = clone $this->_deleted_perm;
+		$expected         = clone $this->_deleted_perm;
 		$expected->status = 1;
 		$expected->version++;
 
@@ -186,15 +184,15 @@ class PermModelTest extends CIUnit_TestCase
 		$expected = clone $this->_deleted_perm;
 
 		$result = $this->_pm->restore($this->_deleted_perm->pid, $this->_deleted_perm->version);
-		$this->assertEquals($expected->version+1, $result->version);
+		$this->assertEquals($expected->version + 1, $result->version);
 	}
 
 	public function testAbilityRevertPermToPreviousVersion() {
-		foreach($this->cmd_perm_fixt as $versions) {
-			if(count($versions) > 1) {
-				$expected = clone $versions[0];
+		foreach ($this->cmd_perm_fixt as $versions) {
+			if (count($versions) > 1) {
+				$expected          = clone $versions[0];
 				$expected->version = count($versions) + 1;
-				$revert_to = $versions[0]->version;
+				$revert_to         = $versions[0]->version;
 				break;
 			}
 		}
@@ -203,11 +201,11 @@ class PermModelTest extends CIUnit_TestCase
 	}
 
 	public function testVersionOfRevertedPermIncrements() {
-		foreach($this->cmd_perm_fixt as $versions) {
-			if(count($versions) > 1) {
-				$expected = clone $versions[0];
+		foreach ($this->cmd_perm_fixt as $versions) {
+			if (count($versions) > 1) {
+				$expected          = clone $versions[0];
 				$expected->version = count($versions) + 1;
-				$revert_to = $versions[0]->version;
+				$revert_to         = $versions[0]->version;
 				break;
 			}
 		}

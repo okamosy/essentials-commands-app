@@ -4,26 +4,23 @@
  * @group Model
  */
 
-class Trigger_Perm_MapModelTest extends CIUnit_TestCase
-{
+class Trigger_Perm_MapModelTest extends CIUnit_TestCase {
 	private $_mm;
 
-	public function __construct($name = NULL, array $data = array(), $dataName = '')
-	{
+	public function __construct($name = NULL, array $data = array(), $dataName = '') {
 		parent::__construct($name, $data, $dataName);
 	}
-	
-	public function setUp()
-	{
+
+	public function setUp() {
 		parent::tearDown();
 		parent::setUp();
-		
+
 		$this->CI->load->model('Trigger_Perm_Map_model');
 		$this->_mm = $this->CI->Trigger_Perm_Map_model;
 		$this->dbfixt('cmd_trigger_perm_map');
-		
+
 		$mapping = array();
-		foreach($this->cmd_trigger_perm_map_fixt as $map) {
+		foreach ($this->cmd_trigger_perm_map_fixt as $map) {
 			$mapping[] = (object)$map;
 		}
 
@@ -39,24 +36,24 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase
 	}
 
 	protected function _extract($fixt, $type) {
-		if(is_array($fixt)) {
+		if (is_array($fixt)) {
 			$fixt = (object)$fixt;
 		}
 
-		$id = "{$type}id";
+		$id      = "{$type}id";
 		$version = "{$type}_version";
-		
+
 		return array(
-			$id => $fixt->{$id},
+			$id      => $fixt->{$id},
 			$version => $fixt->{$version},
 		);
 	}
 
 	public function testAbilityFetchTriggersValidTID() {
 		$expected = array();
-		$trigger = $this->_trigger($this->cmd_trigger_perm_map_fixt[0]);
-		foreach($this->cmd_trigger_perm_map_fixt as $map) {
-			if($map->tid == $trigger['tid'] && $map->t_version == $trigger['t_version']) {
+		$trigger  = $this->_trigger($this->cmd_trigger_perm_map_fixt[0]);
+		foreach ($this->cmd_trigger_perm_map_fixt as $map) {
+			if ($map->tid == $trigger['tid'] && $map->t_version == $trigger['t_version']) {
 				$expected[$map->pid] = $map;
 			}
 		}
@@ -73,7 +70,7 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityCreateMapping() {
-		$data = array(
+		$data     = array(
 			'tid'       => 10,
 			't_version' => 1,
 			'pid'       => 10,
@@ -95,15 +92,15 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityEditMappingValidIDs() {
-		$current = clone $this->cmd_trigger_perm_map_fixt[0];
+		$current  = clone $this->cmd_trigger_perm_map_fixt[0];
 		$expected = clone $current;
 		$expected->p_version++;
 
 		$this->assertTrue($this->_mm->edit((array)$expected, (array)$current));
 
 		$mapping = $this->_mm->fetch($this->_trigger($expected));
-		foreach($mapping as $map) {
-			if($map->tid == $expected->tid && $map->pid == $expected->pid) {
+		foreach ($mapping as $map) {
+			if ($map->tid == $expected->tid && $map->pid == $expected->pid) {
 				$this->assertEquals($expected, $map);
 				break;
 			}
@@ -111,33 +108,33 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testInabilityEditMappingInvalidTID() {
-		$current = clone $this->cmd_trigger_perm_map_fixt[0];
-		$expected = clone $current;
+		$current       = clone $this->cmd_trigger_perm_map_fixt[0];
+		$expected      = clone $current;
 		$expected->pid = 12;
-		$current->tid = 1000;
+		$current->tid  = 1000;
 		$this->assertFalse($this->_mm->edit((array)$expected, (array)$current));
 	}
 
 	public function testInabilityEditMappingInvalidTriggerVersion() {
-		$current = clone $this->cmd_trigger_perm_map_fixt[0];
-		$expected = clone $current;
-		$expected->pid = 12;
+		$current            = clone $this->cmd_trigger_perm_map_fixt[0];
+		$expected           = clone $current;
+		$expected->pid      = 12;
 		$current->t_version = 1000;
 		$this->assertFalse($this->_mm->edit((array)$expected, (array)$current));
 	}
 
 	public function testInabilityEditMappingInvalidPID() {
-		$current = clone $this->cmd_trigger_perm_map_fixt[0];
-		$expected = clone $current;
+		$current       = clone $this->cmd_trigger_perm_map_fixt[0];
+		$expected      = clone $current;
 		$expected->pid = 12;
-		$current->pid = 1000;
+		$current->pid  = 1000;
 		$this->assertFalse($this->_mm->edit((array)$expected, (array)$current));
 	}
 
-		public function testInabilityEditMappingInvalidPermVersion() {
-		$current = clone $this->cmd_trigger_perm_map_fixt[0];
-		$expected = clone $current;
-		$expected->pid = 12;
+	public function testInabilityEditMappingInvalidPermVersion() {
+		$current            = clone $this->cmd_trigger_perm_map_fixt[0];
+		$expected           = clone $current;
+		$expected->pid      = 12;
 		$current->p_version = 1000;
 		$this->assertFalse($this->_mm->edit((array)$expected, (array)$current));
 	}
@@ -150,7 +147,7 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testInAbilityDeleteMappinginValidTID() {
-		$deleted = $this->_trigger($this->cmd_trigger_perm_map_fixt[0]);
+		$deleted        = $this->_trigger($this->cmd_trigger_perm_map_fixt[0]);
 		$deleted['tid'] = 1000;
 
 		$this->assertFalse($this->_mm->delete($deleted));
@@ -158,11 +155,11 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase
 
 	public function testAbilityDeleteMappingValidPID() {
 		$trigger = $this->_trigger($this->cmd_trigger_perm_map_fixt[0]);
-		$perm = $this->_perm($this->cmd_trigger_perm_map_fixt[0]);
+		$perm    = $this->_perm($this->cmd_trigger_perm_map_fixt[0]);
 
 		$expected = array();
-		foreach($this->cmd_trigger_perm_map_fixt as $mapping) {
-			if($trigger == $this->_trigger($mapping) && $perm != $this->_perm($mapping)) {
+		foreach ($this->cmd_trigger_perm_map_fixt as $mapping) {
+			if ($trigger == $this->_trigger($mapping) && $perm != $this->_perm($mapping)) {
 				$expected[$mapping->pid] = $mapping;
 			}
 		}
@@ -172,7 +169,7 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testInAbilityDeleteMappinginValidPID() {
-		$perm = $this->_perm($this->cmd_trigger_perm_map_fixt[0]);
+		$perm        = $this->_perm($this->cmd_trigger_perm_map_fixt[0]);
 		$perm['pid'] = 1000;
 
 		$this->assertFalse($this->_mm->delete($perm));

@@ -4,35 +4,32 @@
  * @group Model
  */
 
-class LogModelTest extends CIUnit_TestCase
-{
+class LogModelTest extends CIUnit_TestCase {
 	private $_lm;
 
-	public function __construct($name = NULL, array $data = array(), $dataName = '')
-	{
+	public function __construct($name = NULL, array $data = array(), $dataName = '') {
 		parent::__construct($name, $data, $dataName);
 	}
-	
-	public function setUp()
-	{
+
+	public function setUp() {
 		parent::tearDown();
 		parent::setUp();
-		
+
 		$this->CI->load->model('Log_model');
 		$this->_lm = $this->CI->Log_model;
 
 		$this->dbfixt('cmd_log', 'cmd_user');
 
 		$list = array();
-		foreach($this->cmd_user_fixt as $user) {
+		foreach ($this->cmd_user_fixt as $user) {
 			$list[$user['uid']] = (object)$user;
 		}
 		$this->cmd_user_fixt = $list;
 
 		$list = array();
-		foreach($this->cmd_log_fixt as $log) {
+		foreach ($this->cmd_log_fixt as $log) {
 			$username = !empty($this->cmd_user_fixt[$log['uid']]) ? $this->cmd_user_fixt[$log['uid']]->username : 'Anonymous';
-			$list[] = (object)array(
+			$list[]   = (object)array(
 				'lid'       => $log['lid'],
 				'username'  => $username,
 				'timestamp' => $log['timestamp'],
@@ -57,14 +54,14 @@ class LogModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityFetchLogLimited() {
-		$start = 5;
+		$start    = 5;
 		$expected = array_slice($this->cmd_log_fixt, $start);
 		$this->assertEquals($expected, $this->_lm->fetch($start));
 	}
 
 	public function testAbilityFetchLogRangeValid() {
-		$start = 2;
-		$limit = 5;
+		$start    = 2;
+		$limit    = 5;
 		$expected = array_slice($this->cmd_log_fixt, $start, $limit);
 		$this->assertEquals($expected, $this->_lm->fetch($start, $limit));
 	}
@@ -75,8 +72,8 @@ class LogModelTest extends CIUnit_TestCase
 
 	public function testAbilityInsertLogValidEvent() {
 		$expected = array_slice($this->cmd_log_fixt, 0, 9);
-		$user = $this->_fetch_user();
-		$event = array(
+		$user     = $this->_fetch_user();
+		$event    = array(
 			'lid'       => count($this->cmd_log_fixt) + 1,
 			'uid'       => $user->uid,
 			'timestamp' => time(),
@@ -95,8 +92,8 @@ class LogModelTest extends CIUnit_TestCase
 
 	public function testAbiltiyInsertLogInvalidEvent() {
 		$expected = array_slice($this->cmd_log_fixt, 0, 9);
-		$user = $this->_fetch_user();
-		$event = array(
+		$user     = $this->_fetch_user();
+		$event    = array(
 			'lid'       => count($this->cmd_log_fixt) + 1,
 			'uid'       => $user->uid,
 			'timestamp' => time(),
@@ -107,7 +104,7 @@ class LogModelTest extends CIUnit_TestCase
 		$this->_lm->insert($event);
 
 		$event['username'] = $user->username;
-		$event['event'] = Log_model::EVENT_UNDEFINED;
+		$event['event']    = Log_model::EVENT_UNDEFINED;
 		unset($event['uid']);
 		array_unshift($expected, (object)$event);
 

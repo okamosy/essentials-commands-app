@@ -4,36 +4,34 @@
  * @group Model
  */
 
-class UserModelTest extends CIUnit_TestCase
-{
+class UserModelTest extends CIUnit_TestCase {
 	private $_um;
 
-	public function __construct($name = NULL, array $data = array(), $dataName = '')
-	{
+	public function __construct($name = NULL, array $data = array(), $dataName = '') {
 		parent::__construct($name, $data, $dataName);
 	}
-	
-	public function setUp()
-	{
+
+	public function setUp() {
 		parent::tearDown();
 		parent::setUp();
-		
+
 		$this->CI->load->model('User_model');
 		$this->_um = $this->CI->User_model;
 		$this->dbfixt('cmd_user');
-		
+
 		$users = array();
-		foreach($this->cmd_user_fixt as $user) {
-			$this->CI->db->update('cmd_user', array('password' => md5($user['password'])), array('uid' => $user['uid']));
+		foreach ($this->cmd_user_fixt as $user) {
+			$this->CI->db->update('cmd_user',
+			                      array('password' => md5($user['password'])),
+			                      array('uid' => $user['uid']));
 			$users[] = (object)$user;
 		}
 
 		$this->cmd_user_fixt = $users;
 	}
 
-	public function testFetchUserValidCreds()
-	{
-		$user = $this->cmd_user_fixt[0];
+	public function testFetchUserValidCreds() {
+		$user     = $this->cmd_user_fixt[0];
 		$expected = (object)array(
 			'uid'      => $user->uid,
 			'username' => $user->username,
@@ -48,7 +46,7 @@ class UserModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityChangePasswordValidUID() {
-		$user = $this->cmd_user_fixt[0];
+		$user     = $this->cmd_user_fixt[0];
 		$new_pass = 'NewPassword';
 		$expected = (object)array(
 			'uid'      => $user->uid,
@@ -65,7 +63,7 @@ class UserModelTest extends CIUnit_TestCase
 	}
 
 	public function testInabilityChangePasswordEmptyNewPassword() {
-		$user = $this->cmd_user_fixt[0];
+		$user     = $this->cmd_user_fixt[0];
 		$new_pass = '';
 		$expected = (object)array(
 			'uid'      => $user->uid,
@@ -79,11 +77,11 @@ class UserModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityChangeEmailValidUID() {
-		$user = $this->cmd_user_fixt[0];
+		$user     = $this->cmd_user_fixt[0];
 		$expected = (object)array(
-			'uid' => $user->uid,
+			'uid'      => $user->uid,
 			'username' => $user->username,
-			'email' => 'newemail@email.com',
+			'email'    => 'newemail@email.com',
 		);
 
 		$this->assertTrue($this->_um->update_email($user->uid, $expected->email));
@@ -95,25 +93,25 @@ class UserModelTest extends CIUnit_TestCase
 	}
 
 	public function testInabilityChangeEmailInvalidEmailAddressFormat() {
-		$user = $this->cmd_user_fixt[0];
+		$user     = $this->cmd_user_fixt[0];
 		$expected = (object)array(
 			'uid'      => $user->uid,
 			'username' => $user->username,
 			'email'    => $user->email,
 		);
-		
+
 		$this->assertFalse($this->_um->update_email($user->uid, 'bademail'));
 		$this->assertEquals($expected, $this->_um->fetch($user->username, $user->password));
 	}
 
 	public function testInabilityChangeEmailEmptyEmailAddress() {
-		$user = $this->cmd_user_fixt[0];
+		$user     = $this->cmd_user_fixt[0];
 		$expected = (object)array(
 			'uid'      => $user->uid,
 			'username' => $user->username,
 			'email'    => $user->email,
 		);
-		
+
 		$this->assertFalse($this->_um->update_email($user->uid, ''));
 		$this->assertEquals($expected, $this->_um->fetch($user->username, $user->password));
 	}

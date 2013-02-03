@@ -4,8 +4,7 @@
  * @group Model
  */
 
-class ReleaseModelTest extends CIUnit_TestCase
-{
+class ReleaseModelTest extends CIUnit_TestCase {
 	private $_rm;
 	private $_status_mapping;
 	private $_num_releases;
@@ -43,7 +42,7 @@ class ReleaseModelTest extends CIUnit_TestCase
 		// group releases together and sort by version
 		foreach (array_reverse($this->cmd_release_fixt) as $release) {
 			$releases[$release['rid']][] = (object)$release;
-			$this->_max_rid = ($release['rid'] > $this->_max_rid) ? $release['rid'] : $this->_max_rid;
+			$this->_max_rid              = ($release['rid'] > $this->_max_rid) ? $release['rid'] : $this->_max_rid;
 		}
 
 		$this->_num_releases = count($releases);
@@ -117,9 +116,10 @@ class ReleaseModelTest extends CIUnit_TestCase
 			}
 		}
 
-		usort($expected, function ($a, $b) {
-			return ($a->rid > $b->rid) ? -1 : 1;
-		});
+		usort($expected,
+			function ($a, $b) {
+				return ($a->rid > $b->rid) ? -1 : 1;
+			});
 		$this->assertEquals($expected, $this->_rm->fetch_all());
 	}
 
@@ -162,43 +162,43 @@ class ReleaseModelTest extends CIUnit_TestCase
 
 	public function testVersionOfNewReleaseIsValid() {
 		$expected = array(
-			'rid'     => $this->_num_releases + 1,
-			'version' => 1,
-			'name'    => 'New Release',
+			'rid'        => $this->_num_releases + 1,
+			'version'    => 1,
+			'name'       => 'New Release',
 			'bukkit'     => '1',
 			'change_log' => 'http://log.goes.here.com',
 			'notes'      => 'nothing to report',
-			'status'  => ESS_UNPUBLISHED,
+			'status'     => ESS_UNPUBLISHED,
 		);
-		$result = $this->_rm->insert($expected);
+		$result   = $this->_rm->insert($expected);
 
 		$this->assertEquals($expected['version'], $result->version);
 	}
 
 	public function testCreateVersionStatusIsUnpublished() {
 		$expected = array(
-			'rid'     => $this->_num_releases + 1,
-			'version' => 1,
-			'name'    => 'New Release',
+			'rid'        => $this->_num_releases + 1,
+			'version'    => 1,
+			'name'       => 'New Release',
 			'bukkit'     => '1',
 			'change_log' => 'http://log.goes.here.com',
 			'notes'      => 'nothing to report',
-			'status'  => ESS_UNPUBLISHED,
+			'status'     => ESS_UNPUBLISHED,
 		);
-		$result = $this->_rm->insert($expected);
+		$result   = $this->_rm->insert($expected);
 
 		$this->assertEquals(ESS_UNPUBLISHED, $result->status);
 	}
 
 	public function testCreatedVersionNameMustBeUnique() {
 		$expected = array(
-			'rid'     => $this->_num_releases + 1,
-			'version' => 1,
-			'name'    => $this->cmd_release_fixt[$this->_status_mapping[ESS_PUBLISHED]][0]->name,
+			'rid'        => $this->_num_releases + 1,
+			'version'    => 1,
+			'name'       => $this->cmd_release_fixt[$this->_status_mapping[ESS_PUBLISHED]][0]->name,
 			'bukkit'     => '1',
 			'change_log' => 'http://log.goes.here.com',
 			'notes'      => 'nothing to report',
-			'status'  => ESS_UNPUBLISHED,
+			'status'     => ESS_UNPUBLISHED,
 		);
 
 		$this->assertFalse($this->_rm->insert($expected));
@@ -206,25 +206,25 @@ class ReleaseModelTest extends CIUnit_TestCase
 
 	public function testCreatedVersionNameCannotBeEmpty() {
 		$expected = array(
-			'rid'     => $this->_num_releases + 1,
-			'version' => 1,
-			'name'    => '',
+			'rid'        => $this->_num_releases + 1,
+			'version'    => 1,
+			'name'       => '',
 			'bukkit'     => '1',
 			'change_log' => 'http://log.goes.here.com',
 			'notes'      => 'nothing to report',
-			'status'  => ESS_UNPUBLISHED,
+			'status'     => ESS_UNPUBLISHED,
 		);
 
 		$this->assertFalse($this->_rm->insert($expected));
 	}
 
 	public function testAbilityCloneReleaseValid() {
-		$original = $this->_fetch_type(ESS_PUBLISHED);
-		$expected = clone $original;
-		$expected->name = 'new Release';
-		$expected->rid = $this->_max_rid+1;
+		$original          = $this->_fetch_type(ESS_PUBLISHED);
+		$expected          = clone $original;
+		$expected->name    = 'new Release';
+		$expected->rid     = $this->_max_rid + 1;
 		$expected->version = 1;
-		$expected->status = ESS_UNPUBLISHED;
+		$expected->status  = ESS_UNPUBLISHED;
 
 		$this->assertEquals($expected, $this->_rm->clone_release($original->rid, array('name' => $expected->name)));
 	}

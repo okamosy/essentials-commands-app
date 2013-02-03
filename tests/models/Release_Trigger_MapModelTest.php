@@ -4,17 +4,14 @@
  * @group Model
  */
 
-class Release_Trigger_MapModelTest extends CIUnit_TestCase
-{
+class Release_Trigger_MapModelTest extends CIUnit_TestCase {
 	private $_mm;
 
-	public function __construct($name = NULL, array $data = array(), $dataName = '')
-	{
+	public function __construct($name = NULL, array $data = array(), $dataName = '') {
 		parent::__construct($name, $data, $dataName);
 	}
 
-	public function setUp()
-	{
+	public function setUp() {
 		parent::tearDown();
 		parent::setUp();
 
@@ -23,7 +20,7 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase
 		$this->dbfixt('cmd_release_trigger_map');
 
 		$mapping = array();
-		foreach($this->cmd_release_trigger_map_fixt as $map) {
+		foreach ($this->cmd_release_trigger_map_fixt as $map) {
 			$mapping[] = (object)$map;
 		}
 
@@ -32,9 +29,9 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase
 
 	public function testAbilityFetchTriggersValidRID() {
 		$expected = array();
-		$rid = $this->cmd_release_trigger_map_fixt[0]->rid;
-		foreach($this->cmd_release_trigger_map_fixt as $map) {
-			if($map->rid == $rid) {
+		$rid      = $this->cmd_release_trigger_map_fixt[0]->rid;
+		foreach ($this->cmd_release_trigger_map_fixt as $map) {
+			if ($map->rid == $rid) {
 				$expected[$map->tid] = $map;
 			}
 		}
@@ -47,13 +44,13 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityCreateMapping() {
-		$data = (object)array(
-			'rid' => 10,
-			'tid' => 10,
+		$data            = (object)array(
+			'rid'       => 10,
+			'tid'       => 10,
 			't_version' => 1,
 		);
-        $mapping = clone $data;
-        $mapping->status = 1;
+		$mapping         = clone $data;
+		$mapping->status = 1;
 
 		$expected = array(
 			$mapping->tid => $mapping,
@@ -77,8 +74,8 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase
 		$this->assertTrue($this->_mm->edit($expected->rid, $expected->tid, $expected->t_version));
 
 		$mapping = $this->_mm->fetch($expected->rid);
-		foreach($mapping as $map) {
-			if($map->rid == $expected->rid && $map->tid == $expected->tid) {
+		foreach ($mapping as $map) {
+			if ($map->rid == $expected->rid && $map->tid == $expected->tid) {
 				$this->assertEquals($expected, $map);
 				break;
 			}
@@ -96,10 +93,10 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testAbilityDeleteMappingValidRID() {
-		$deleted = $this->cmd_release_trigger_map_fixt[0];
+		$deleted  = $this->cmd_release_trigger_map_fixt[0];
 		$expected = array();
-		foreach($this->cmd_release_trigger_map_fixt as $mapping) {
-			if($mapping->rid == $deleted->rid && $mapping->tid != $deleted->tid) {
+		foreach ($this->cmd_release_trigger_map_fixt as $mapping) {
+			if ($mapping->rid == $deleted->rid && $mapping->tid != $deleted->tid) {
 				$expected[$mapping->tid] = $mapping;
 			}
 		}
@@ -109,12 +106,12 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testInabilityDeleteMappingInvalidRID() {
-		$deleted = $this->cmd_release_trigger_map_fixt[0];
-        $unknown = clone $deleted;
-        $unknown->rid = 1000;
-		$expected = array();
-		foreach($this->cmd_release_trigger_map_fixt as $mapping) {
-			if($mapping->rid == $deleted->rid) {
+		$deleted      = $this->cmd_release_trigger_map_fixt[0];
+		$unknown      = clone $deleted;
+		$unknown->rid = 1000;
+		$expected     = array();
+		foreach ($this->cmd_release_trigger_map_fixt as $mapping) {
+			if ($mapping->rid == $deleted->rid) {
 				$expected[$mapping->tid] = $mapping;
 			}
 		}
@@ -124,11 +121,11 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase
 	}
 
 	public function testInabilityDeleteMappingInvalidTID() {
-		$deleted = clone $this->cmd_release_trigger_map_fixt[0];
-        $deleted->tid = 1000;
-		$expected = array();
-		foreach($this->cmd_release_trigger_map_fixt as $mapping) {
-			if($mapping->rid == $deleted->rid) {
+		$deleted      = clone $this->cmd_release_trigger_map_fixt[0];
+		$deleted->tid = 1000;
+		$expected     = array();
+		foreach ($this->cmd_release_trigger_map_fixt as $mapping) {
+			if ($mapping->rid == $deleted->rid) {
 				$expected[$mapping->tid] = $mapping;
 			}
 		}

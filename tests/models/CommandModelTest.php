@@ -4,8 +4,7 @@
  * @group Model
  */
 
-class ControlModelTest extends CIUnit_TestCase
-{
+class ControlModelTest extends CIUnit_TestCase {
 	private $_cm;
 	private $_max_tid;
 	private $_max_pid;
@@ -21,8 +20,12 @@ class ControlModelTest extends CIUnit_TestCase
 
 		$this->CI->load->model('Command_model');
 		$this->_cm = $this->CI->Command_model;
-		$this->dbfixt('cmd_user', 'cmd_release', 'cmd_trigger', 'cmd_release_trigger_map',
-		              'cmd_perm', 'cmd_trigger_perm_map');
+		$this->dbfixt('cmd_user',
+		              'cmd_release',
+		              'cmd_trigger',
+		              'cmd_release_trigger_map',
+		              'cmd_perm',
+		              'cmd_trigger_perm_map');
 
 		$this->cmd_user_fixt                = $this->_initialize_users($this->cmd_user_fixt);
 		$this->_release_status_mapping      = $this->_initialize_releases();
@@ -49,7 +52,9 @@ class ControlModelTest extends CIUnit_TestCase
 		$users = array();
 		foreach ($user_list as $user) {
 			$users[] = (object)$user;
-			$this->CI->db->update('cmd_user', array('password' => md5($user['password'])), array('username' => $user['username']));
+			$this->CI->db->update('cmd_user',
+			                      array('password' => md5($user['password'])),
+			                      array('username' => $user['username']));
 		}
 
 		return $users;
@@ -68,9 +73,11 @@ class ControlModelTest extends CIUnit_TestCase
 		foreach ($releases as $release) {
 			if ($release[0]->status == ESS_DEFAULT) {
 				$default = $release;
-			} elseif ($release[0]->status == ESS_PROMOTED) {
+			}
+			elseif ($release[0]->status == ESS_PROMOTED) {
 				$promoted[] = $release;
-			} else {
+			}
+			else {
 				$this->cmd_release_fixt[] = $release;
 			}
 		}
@@ -202,7 +209,7 @@ class ControlModelTest extends CIUnit_TestCase
 				$perm->desc    = $trigger->desc;
 				$perm->instr   = $trigger->instr;
 				$perm->syntax  = $trigger->syntax;
-				$perm->tid = $trigger->tid;
+				$perm->tid     = $trigger->tid;
 
 				$perms[] = $perm;
 			}
@@ -469,7 +476,7 @@ class ControlModelTest extends CIUnit_TestCase
 	}
 
 	public function testInabilityFetchPermissionsListByReleaseUnpublishedReleaseAnonymous() {
-		$release  = $this->_fetch_release(ESS_UNPUBLISHED);
+		$release = $this->_fetch_release(ESS_UNPUBLISHED);
 
 		$this->assertFalse($this->_cm->fetch_permissions($release->rid));
 	}
@@ -483,13 +490,13 @@ class ControlModelTest extends CIUnit_TestCase
 	}
 
 	public function testInabilityFetchPermissionsListByReleaseDeletedReleaseAnonymous() {
-		$release  = $this->_fetch_release(ESS_DELETED);
+		$release = $this->_fetch_release(ESS_DELETED);
 
 		$this->assertFalse($this->_cm->fetch_permissions($release->rid));
 	}
 
 	public function testInabilityFetchPermissionsListByReleaseDeletedReleaseAuthenticated() {
-		$release  = $this->_fetch_release(ESS_DELETED);
+		$release = $this->_fetch_release(ESS_DELETED);
 		$this->_login();
 
 		$this->assertFalse($this->_cm->fetch_permissions($release->rid));
@@ -641,7 +648,7 @@ class ControlModelTest extends CIUnit_TestCase
 
 		$this->_login();
 
-		$this->assertTrue($this->_cm->update_release_status($release->rid, $expected->status));
+		$this->assertEquals($expected, $this->_cm->update_release_status($release->rid, $expected->status));
 		$this->assertEquals($expected, $this->_cm->fetch_release($expected->rid));
 	}
 
@@ -807,7 +814,9 @@ class ControlModelTest extends CIUnit_TestCase
 		$this->_login();
 		$this->_cm->delete_trigger($release->rid, $deleted->tid);
 
-		$this->assertEmpty($this->_cm->fetch_permissions($release->rid, array('tid' => $deleted->tid, 't_version' => $deleted->version)));
+		$this->assertEmpty($this->_cm->fetch_permissions($release->rid,
+		                                                 array('tid'       => $deleted->tid,
+		                                                       't_version' => $deleted->version)));
 	}
 
 	public function testInabilityRevertTriggerAnonymous() {
@@ -879,7 +888,10 @@ class ControlModelTest extends CIUnit_TestCase
 		$perms    = $this->_fetch_permissions($trigger);
 		$this->_cm->logout();
 
-		$this->assertFalse($this->_cm->edit_permission($release->rid, $trigger->tid, $perms[0]->pid, array('perm' => 'editedPerm')));
+		$this->assertFalse($this->_cm->edit_permission($release->rid,
+		                                               $trigger->tid,
+		                                               $perms[0]->pid,
+		                                               array('perm' => 'editedPerm')));
 	}
 
 	public function testAbilityEditPermissionAuthenticated() {
@@ -893,7 +905,11 @@ class ControlModelTest extends CIUnit_TestCase
 
 		$this->_login();
 
-		$this->assertEquals($perm, $this->_cm->edit_permission($release->rid, $trigger->tid, $perm->pid, array('perm' => $perm->perm)));
+		$this->assertEquals($perm,
+		                    $this->_cm->edit_permission($release->rid,
+		                                                $trigger->tid,
+		                                                $perm->pid,
+		                                                array('perm' => $perm->perm)));
 	}
 
 	public function testEditingPermissionUpdatesMapping() {
@@ -906,7 +922,10 @@ class ControlModelTest extends CIUnit_TestCase
 
 		$this->_login();
 
-		$perm = $this->_cm->edit_permission($release->rid, $trigger->tid, $perms[0]->pid, array('perm' => $perms[0]->perm));
+		$perm = $this->_cm->edit_permission($release->rid,
+		                                    $trigger->tid,
+		                                    $perms[0]->pid,
+		                                    array('perm' => $perms[0]->perm));
 		$this->assertEquals($perms, $this->_cm->fetch_permissions($release->rid, $trigger->tid));
 	}
 
@@ -948,7 +967,10 @@ class ControlModelTest extends CIUnit_TestCase
 		$this->_cm->edit_permission($release->rid, $trigger->tid, $perm->pid, array('perm' => $perm->perm));
 		$this->_cm->logout();
 
-		$this->assertFalse($this->_cm->revert_permission($release->rid, $trigger->tid, $perms[0]->pid, $perms[0]->version));
+		$this->assertFalse($this->_cm->revert_permission($release->rid,
+		                                                 $trigger->tid,
+		                                                 $perms[0]->pid,
+		                                                 $perms[0]->version));
 	}
 
 	public function testAbilityRevertPermissionAuthenticated() {
@@ -966,7 +988,11 @@ class ControlModelTest extends CIUnit_TestCase
 		$this->_login();
 		$this->_cm->edit_permission($release->rid, $trigger->tid, $perm->pid, array('perm' => $perm->perm));
 
-		$this->assertEquals($expected, $this->_cm->revert_permission($release->rid, $trigger->tid, $perms[0]->pid, $perms[0]->version));
+		$this->assertEquals($expected,
+		                    $this->_cm->revert_permission($release->rid,
+		                                                  $trigger->tid,
+		                                                  $perms[0]->pid,
+		                                                  $perms[0]->version));
 	}
 
 	public function testRevertingPermissionUpdatesMapping() {
@@ -979,7 +1005,10 @@ class ControlModelTest extends CIUnit_TestCase
 		$this->_login();
 		$this->_cm->edit_permission($release->rid, $trigger->tid, $original_perm->pid, array('perm' => 'editedPerm'));
 
-		$reverted_perm = $this->_cm->revert_permission($release->rid, $trigger->tid, $original_perm->pid, $original_perm->version);
+		$reverted_perm = $this->_cm->revert_permission($release->rid,
+		                                               $trigger->tid,
+		                                               $original_perm->pid,
+		                                               $original_perm->version);
 		array_unshift($perms, $reverted_perm);
 
 		$this->assertEquals($perms, $this->_cm->fetch_permissions($release->rid, $trigger->tid));
