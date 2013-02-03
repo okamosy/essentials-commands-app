@@ -5,7 +5,7 @@
 	trigger: 'trig'
 	alias: 'alias1'
 	desc: 'Description 1'
-	instr: 'Instructions 1'
+	instr: 'Instructions for trig1'
 	syntax: 'Syntax for trig1'
 	status: 1
 2:
@@ -23,7 +23,7 @@
 	version: 1
 	cat: 'General'
 	trigger: 'trig2'
-	alias: 
+	alias:
 	desc: 'Description 2'
 	instr: 'Instructions 2'
 	syntax: 'Syntax for trig2'

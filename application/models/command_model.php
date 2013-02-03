@@ -758,7 +758,7 @@ class Command_model extends CI_Model {
 
 			$current_map = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $trigger->tid, 't_version' => $trigger->t_version, 'pid' => $pid));
 			if(empty($current_map[$pid])) {
-				if(!$this->_ci->Trigger_Perm_Map_model->insert($map)) {
+				if(!$this->_ci->Trigger_Perm_Map_model->insert($updated_map)) {
 					throw new Exception();
 				}
 			}
@@ -774,6 +774,51 @@ class Command_model extends CI_Model {
 
 		$this->db->trans_commit();
 		return $perm;
+	}
+
+	public function search($text, $release = '') {
+		if(empty($text)) {
+			return FALSE;
+		}
+
+		$search_string = $this->db->escape_like_str($text);
+		$release_filter = empty($release) ?
+			sprintf("r.status = '%s'", ESS_DEFAULT) :
+			sprintf("r.status IN ('%s') AND r.name LIKE '%s'",
+			        implode("','", array(ESS_DEFAULT, ESS_PUBLISHED, ESS_PROMOTED)),
+			        $this->db->escape_like_str($release));
+
+		$base_sql = "
+			SELECT t . *
+			FROM cmd_release r
+				JOIN cmd_release_trigger_map rtm ON ( r.rid = rtm.rid )
+				JOIN cmd_trigger t ON ( t.tid = rtm.tid AND t.version = rtm.t_version )
+			WHERE {$release_filter}
+				AND rtm.status =1
+				AND t.status =1
+				AND (%s)
+			GROUP BY r.rid
+			ORDER BY r.version DESC";
+		$permutations = array(
+			"t.trigger LIKE '%s' OR t.alias LIKE '%s'",
+			"t.trigger LIKE '%%%s%%' OR t.alias LIKE '%%%s%%'",
+			"t.instr LIKE '%%%s%%' OR t.syntax LIKE '%%%s%%'",
+		);
+
+		$sql = '';
+		foreach($permutations as $permute) {
+			$sql .= sprintf("(%s) UNION ", sprintf($base_sql, sprintf($permute, $search_string, $search_string)));
+		}
+		$sql = rtrim($sql, ' UNION');
+
+		$query = $this->db->query($sql);
+
+		$results = array();
+		foreach($query->result() as $row) {
+			$results[] = $row;
+		}
+
+		return $results;
 	}
 
 	/**

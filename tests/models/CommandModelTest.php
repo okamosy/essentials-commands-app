@@ -1015,30 +1015,78 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testSearchReturnsMatchingTrigger() {
-		$this->markTestIncomplete();
+		$release = $this->_fetch_release(ESS_DEFAULT);
+		$triggers = $this->_fetch_triggers($release->rid);
+		$expected = array(
+			$triggers[0],
+		);
+
+		$this->assertEquals($expected, $this->_cm->search($triggers[0]->trigger));
 	}
 
 	public function testSearchReturnsMatchingAlias() {
-		$this->markTestIncomplete();
+		$release = $this->_fetch_release(ESS_DEFAULT);
+		$triggers = $this->_fetch_triggers($release->rid);
+		$expected = array(
+			$triggers[0],
+		);
+
+		$this->assertEquals($expected, $this->_cm->search($triggers[0]->alias));
 	}
 
 	public function testSearchReturnsMatchingInstrAndDesc() {
-		$this->markTestIncomplete();
+		$release = $this->_fetch_release(ESS_DEFAULT);
+		$triggers = $this->_fetch_triggers($release->rid);
+		$expected = array(
+			$triggers[0],
+		);
+
+		$this->assertEquals($expected, $this->_cm->search($triggers[0]->instr));
+		$this->assertEquals($expected, $this->_cm->search($triggers[0]->syntax));
 	}
 
 	public function testSearchPartialReturnsMultipleResults() {
-		$this->markTestIncomplete();
-	}
+		$release = $this->_fetch_release(ESS_DEFAULT);
+		$triggers = $this->_fetch_triggers($release->rid);
+		$search_term = substr($triggers[0]->trigger, 0, 3);
+		$expected = array();
+		foreach($triggers as $trigger) {
+			if(strpos($trigger->trigger, $search_term) !== FALSE ||
+				strpos($trigger->alias, $search_term) !== FALSE ||
+				strpos($trigger->instr, $search_term) !== FALSE ||
+				strpos($trigger->syntax, $search_term) !== FALSE) {
+				$expected[] = $trigger;
+			}
+		}
 
-	public function testSearchUnknownReturnsError() {
-		$this->markTestIncomplete();
+		$this->assertEquals($expected, $this->_cm->search($search_term));
 	}
 
 	public function testSearchSpecificReleaseValid() {
-		$this->markTestIncomplete();
+		$release = $this->_fetch_release(ESS_PUBLISHED);
+		$triggers = $this->_fetch_triggers($release->rid);
+		$expected = array(
+			$triggers[0],
+		);
+
+		$this->assertEquals($expected, $this->_cm->search($triggers[0]->trigger, $release->name));
 	}
 
-	public function testSearchSpecificReleaseInvalidReturnsError() {
-		$this->markTestIncomplete();
+	public function testSearchSpecificReleaseInvalidReturnsEmptyResult() {
+		$release = $this->_fetch_release(ESS_DEFAULT);
+		$triggers = $this->_fetch_triggers($release->rid);
+
+		$this->assertEmpty($this->_cm->search($triggers[0]->trigger, 'Unknown Release'));
+	}
+
+	public function testSearchSpecificReleaseUnpublishedReturnsEmptyResult() {
+		$release = $this->_fetch_release(ESS_UNPUBLISHED);
+		$triggers = $this->_fetch_triggers($release->rid);
+
+		$this->assertEmpty($this->_cm->search($triggers[0]->trigger, $release->name));
+	}
+
+	public function testInabilityPerformBlankSearch() {
+		$this->assertFalse($this->_cm->search(''));
 	}
 }
