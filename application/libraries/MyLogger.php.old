@@ -1,0 +1,62 @@
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+
+class MyLogger {
+	public static $events = array(
+		self::EVENT_UNDEFINED,
+		self::EVENT_LOGIN,
+		self::EVENT_LOGOUT,
+		self::EVENT_INSERT,
+		self::EVENT_EDIT,
+		self::EVENT_DELETE,
+		self::EVENT_RESTORE,
+		self::EVENT_PUBLISH,
+		self::EVENT_UNPUBLISH,
+		self::EVENT_ERROR,
+	);
+
+	const EVENT_UNDEFINED = 'Undefined';
+	const EVENT_LOGIN     = 'Login';
+	const EVENT_LOGOUT    = 'Logout';
+	const EVENT_INSERT    = 'Insert';
+	const EVENT_EDIT      = 'Edit';
+	const EVENT_DELETE    = 'Delete';
+	const EVENT_RESTORE   = 'Restore';
+	const EVENT_PUBLISH   = 'Publish';
+	const EVENT_UNPUBLISH = 'Unpublish';
+	const EVENT_ERROR     = 'Error';
+
+	protected $_lm;
+
+	public function __construct() {
+		$CI =& get_instance();
+		$CI->load->model('log_model');
+
+		$this->_lm = $CI->log_model;
+	}
+
+	public function get_log($offset = 0, $limit = 20) {
+		$logs = $this->_map_events($this->_lm->fetch($offset, $limit));
+
+		return $logs;
+	}
+
+	public function get_last_event() {
+		$log = $this->_map_events($this->_lm->fetch(0, 1));
+		return $log[0];
+	}
+
+	public function log($uid, $event, $desc) {
+		if(is_object($desc) || is_array($desc)) {
+			$desc = serialize($desc);
+		}
+		$this->_lm->insert($uid, array_search($event, self::$events), $desc);
+	}
+
+	protected function _map_events($logs) {
+		foreach($logs as &$log) {
+			$log->event = self::$events[$log->event];
+		}
+
+		return $logs;
+	}
+}

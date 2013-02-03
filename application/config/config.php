@@ -14,7 +14,9 @@
 | path to your installation.
 |
 */
-$config['base_url']	= 'http://wiki.ess3.net/doc/';
+// $config['base_url']	= 'http://wiki.ess3.net/doc/';
+$host = !empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'test.local';
+$config['base_url']	= 'http://' . $host .'/doc/';
 
 /*
 |--------------------------------------------------------------------------

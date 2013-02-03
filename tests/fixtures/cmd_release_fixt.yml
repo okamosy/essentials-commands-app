@@ -1,0 +1,48 @@
+1:
+	rid: 1
+	version: 1
+	name: 'test release'
+	bukkit: '0.1'
+	change_log: 'http://nowhere.com'
+	notes: 'Some interesting notes'
+	status: 'deleted'
+2:
+	rid: 2
+	version: 1
+	name: '1'
+	bukkit: '0.2'
+	change_log: 'http://nowhere.com/notes1'
+	notes: 'Notes about release 1'
+	status: 'published'
+3:
+	rid: 2
+	version: 2
+	name: '1.0.0'
+	bukkit: '0.1.5'
+	change_log: 'http://nowhere.com/notes2'
+	notes: 'Notes about release 1.0.0'
+	status: 'published'
+5:
+	rid: 3
+	version: 1
+	name: '1.1.0'
+	bukkit: '0.1.5'
+	change_log: 'http://nowhere.com/notes/3'
+	notes: 'Notes about release 0.1.5'
+	status: 'promoted'
+6:
+	rid: 4
+	version: 1
+	name: '1.2.0'
+	bukkit: '0.2'
+	change_log: 'http://nowhere.com/2'
+	notes: 'Notes about release 1.2.0'
+	status: 'default'
+7:
+	rid: 5
+	version: 1
+	name: '2.0.0'
+	bukkit: '1.0'
+	change_log: 'http://nowhere.com/major'
+	notes: 'Notes about this big release 2'
+	status: 'unpublished'

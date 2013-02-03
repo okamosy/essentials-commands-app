@@ -1,4 +1,19 @@
-<?php echo anchor('/', 'View Commands Only', array('class' => 'button switch-view')); ?>
+<div id="main-controls">
+	<?php echo anchor('/', 'View Commands Only', array('class' => 'button switch-view')); ?>
+</div>
+<input type="hidden" id="rid" value="<?php echo $release->rid; ?>" />
+
+<div id="release-details">
+	<?php $this->load->view('docs/release_details'); ?>
+</div>
+
+<div id="releases">
+	<span id="release_label">Select a release: </span>
+	<div id="release_selector">
+		<?php $this->load->view('docs/release_selector'); ?>
+	</div>
+</div>
+
 <table id="permissions" class="datatable">
 	<thead>
 		<tr>
@@ -11,15 +26,5 @@
 		</tr>
 	</thead>
 	<tbody>
-		<?php foreach($permissions->result() as $perm) : ?>
-		<tr>
-			<td><?php echo $perm->pid; ?></td>
-			<td><?php echo $perm->tid; ?></td>
-			<td id="cmd-<?php echo $perm->tid.'-cat'; ?>"><?php echo htmlspecialchars($perm->cat); ?></td>
-			<td id="cmd-<?php echo $perm->tid.'-trigger'; ?>"><?php echo htmlspecialchars($perm->trigger); ?></td>
-			<td id="perm-<?php echo $perm->pid.'-perm'; ?>"><?php echo htmlspecialchars($perm->perm); ?></td>
-			<td id="perm-<?php echo $perm->pid.'-pdesc'; ?>"><?php echo htmlspecialchars($perm->pdesc); ?></td>
-		</tr>
-		<?php endforeach; ?>
 	</tbody>
 </table>

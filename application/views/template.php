@@ -1,3 +1,4 @@
+<?php $is_logged_in = isset($is_logged_in) ? $is_logged_in : FALSE; ?>
 <!doctype html>
 <!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
 <!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
@@ -19,17 +20,21 @@
   <meta name="viewport" content="width=device-width">
 
   <!-- Place favicon.ico and apple-touch-icon.png in the root directory: mathiasbynens.be/notes/touch-icons -->
- 
-  <link href="http://essentials3.net/cache/doc/assets/css/ess1/jquery-ui-1.8.13.custom.css" rel="stylesheet" type="text/css" />
-  <link href="http://essentials3.net/cache/doc/assets/css/style.css" rel="stylesheet" type="text/css" />
 
+<!--   <link href="http://essentials3.net/cache/doc/assets/css/ess1/jquery-ui-1.8.13.custom.css" rel="stylesheet" type="text/css" />
+  <link href="http://essentials3.net/cache/doc/assets/css/style.css" rel="stylesheet" type="text/css" />
+ -->
+
+  <?php echo link_tag("assets/css/ess1/jquery-ui-1.8.13.custom.css"); ?>
+  <?php echo link_tag("assets/css/style.css"); ?>
 
   <!-- More ideas for your <head> here: h5bp.com/d/head-Tips -->
 
   <!-- All JavaScript at the bottom, except this Modernizr build.
        Modernizr enables HTML5 elements & feature detects for optimal performance.
        Create your own custom Modernizr build: www.modernizr.com/download/ -->
-  <script src="http://essentials3.net/cache/doc/assets/js/libs/modernizr-2.5.2.min.js"></script>
+<!--  <script src="http://essentials3.net/cache/doc/assets/js/libs/modernizr-2.5.2.min.js"></script>-->
+	<script src="<?php echo base_url(); ?>assets/js/libs/modernizr-2.6.2.min.js"></script>
 </head>
 <body>
   <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
@@ -40,6 +45,7 @@
   </header>
   <div role="main">
     <?php echo $is_logged_in ? anchor('logout', 'Logout', array('id' => 'logout-link')) : ''; ?>
+    <input type="hidden" id="base-url" value="<?php echo base_url(); ?>" />
     <?php $this->load->view($view); ?>
   </div>
   <footer style="width:750px; margin-left: auto; margin-right: auto;">
@@ -62,10 +68,10 @@ src="http://pagead2.googlesyndication.com/pagead/show_ads.js">
   <!-- JavaScript at the bottom for fast page loading -->
 
   <!-- Grab aspnet CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-  <script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.7.1.min.js"></script>
-  <script>window.jQuery || document.write('<script src="<?php echo base_url('assets/js/libs/jquery-1.7.1.min.js'); ?>"><\/script>')</script>
-  <script src="//ajax.aspnetcdn.com/ajax/jquery.ui/1.8.16/jquery-ui.min.js"></script>
-  <script>window.jQuery.ui || document.write('<script src="<?php echo base_url('assets/js/libs/jquery-ui-1.8.17.custom.min.js'); ?>"<\/script>')</script>
+  <script src="//ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.min.js"></script>
+  <script>window.jQuery || document.write('<script src="<?php echo base_url('assets/js/libs/jquery-1.9.0.min.js'); ?>"><\/script>')</script>
+  <script src="//ajax.aspnetcdn.com/ajax/jquery.ui/1.10.0/jquery-ui.min.js"></script>
+  <script>window.jQuery.ui || document.write('<script src="<?php echo base_url('assets/js/libs/jquery-ui-1.10.0.custom.min.js'); ?>"<\/script>')</script>
 
   <!-- Add the Datatables library -->
   <script src="//ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.0/jquery.dataTables.min.js"></script>

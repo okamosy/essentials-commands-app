@@ -97,12 +97,17 @@ class CI_Session {
 		{
 			$this->sess_expiration = (60*60*24*365*2);
 		}
-		
+
 		// Set the cookie name
 		$this->sess_cookie_name = $this->cookie_prefix.$this->sess_cookie_name;
 
 		// Run the Session routine. If a session doesn't exist we'll
 		// create a new one.  If it does, we'll update it.
+		if ($this->sess_use_database === TRUE)
+		{
+			$this->CI->db->trans_start();
+		}
+
 		if ( ! $this->sess_read())
 		{
 			$this->sess_create();
@@ -110,6 +115,11 @@ class CI_Session {
 		else
 		{
 			$this->sess_update();
+		}
+
+		if ($this->sess_use_database === TRUE)
+		{
+			$this->CI->db->trans_complete();
 		}
 
 		// Delete 'old' flashdata (from last request)
@@ -317,7 +327,8 @@ class CI_Session {
 							'session_id'	=> md5(uniqid($sessid, TRUE)),
 							'ip_address'	=> $this->CI->input->ip_address(),
 							'user_agent'	=> substr($this->CI->input->user_agent(), 0, 120),
-							'last_activity'	=> $this->now
+							'last_activity'	=> $this->now,
+							'user_data'		=> ''
 							);
 
 
@@ -398,7 +409,7 @@ class CI_Session {
 	function sess_destroy()
 	{
 		// Kill the session DB row
-		if ($this->sess_use_database === TRUE AND isset($this->userdata['session_id']))
+		if ($this->sess_use_database === TRUE && isset($this->userdata['session_id']))
 		{
 			$this->CI->db->where('session_id', $this->userdata['session_id']);
 			$this->CI->db->delete($this->sess_table_name);
@@ -413,6 +424,9 @@ class CI_Session {
 					$this->cookie_domain,
 					0
 				);
+
+		// Kill session data
+		$this->userdata = array();
 	}
 
 	// --------------------------------------------------------------------

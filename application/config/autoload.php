@@ -64,7 +64,7 @@ $autoload['libraries'] = array('database');
 |	$autoload['helper'] = array('url', 'file');
 */
 
-$autoload['helper'] = array('url', 'html');
+$autoload['helper'] = array('url', 'html', 'form');
 
 
 /*
@@ -109,7 +109,7 @@ $autoload['language'] = array();
 |
 */
 
-$autoload['model'] = array('Command_model');
+$autoload['model'] = array('Release_model', 'Release_Trigger_Map_model', 'Trigger_model', 'Trigger_Perm_Map_model', 'Perm_model', 'Command_model');
 
 
 /* End of file autoload.php */
