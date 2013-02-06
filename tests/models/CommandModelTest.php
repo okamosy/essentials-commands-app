@@ -1123,7 +1123,6 @@ class ControlModelTest extends CIUnit_TestCase {
 			}
 		}
 
-		var_dump($source_trigger);
 		$this->assertEquals($instr_expected, $this->_cm->search($source_trigger->instr));
 		$this->assertEquals($syntax_expected, $this->_cm->search($source_trigger->desc));
 	}
