@@ -9,6 +9,7 @@ class ReleaseModelTest extends CIUnit_TestCase {
 	private $_status_mapping;
 	private $_num_releases;
 	private $_max_rid = 0;
+	private $_type_with_versions = 0;
 
 	public function __construct($name = NULL, array $data = array(), $dataName = '') {
 		parent::__construct($name, $data, $dataName);
@@ -18,43 +19,58 @@ class ReleaseModelTest extends CIUnit_TestCase {
 		parent::tearDown();
 		parent::setUp();
 
-		/*
-		* this is an example of how you would load a product model,
-		* load fixture data into the test database (assuming you have the fixture yaml files filled with data for your tables),
-		* and use the fixture instance variable
-
-		$this->CI->load->model('Product_model', 'pm');
-		$this->pm=$this->CI->pm;
-		$this->dbfixt('users', 'products')
-
-		the fixtures are now available in the database and so:
-		$this->users_fixt;
-		$this->products_fixt;
-
-		*/
-
 		$this->CI->load->model('Release_model');
 		$this->_rm = $this->CI->Release_model;
 
 		$this->dbfixt('cmd_release');
 
+		$this->cmd_release_fixt = $this->_prepare_releases($this->cmd_release_fixt);
+	}
+
+	private function _prepare_releases($fixture) {
 		$releases = array();
-		// group releases together and sort by version
-		foreach (array_reverse($this->cmd_release_fixt) as $release) {
+		// Group the releases by rid
+		foreach ($fixture as $release) {
 			$releases[$release['rid']][] = (object)$release;
-			$this->_max_rid              = ($release['rid'] > $this->_max_rid) ? $release['rid'] : $this->_max_rid;
+			if (empty($this->_type_with_versions) && count($releases[$release['rid']]) > 1) {
+				$this->_type_with_versions = $release['status'];
+			}
+			$this->_max_rid = ($release['rid'] > $this->_max_rid) ? $release['rid'] : $this->_max_rid;
 		}
 
 		$this->_num_releases = count($releases);
 
-		$index                  = 0;
-		$this->_status_mapping  = array();
-		$this->cmd_release_fixt = array();
-		foreach ($releases as $versions) {
-			$this->cmd_release_fixt[]                                          = $versions;
-			$this->_status_mapping[$this->cmd_release_fixt[$index][0]->status] = $index;
-			$index++;
+		// Now re-order them
+		// They should be in this order
+		// - Default
+		// - Promoted (newest first)
+		// - Everything else (newest first)
+		$result    = array();
+		$promoted  = array();
+		$remainder = array();
+		foreach ($releases as $release) {
+			// Flip the release to put the latest revision first
+			$release = array_reverse($release);
+			switch ($release[0]->status) {
+				case ESS_DEFAULT:
+					$result[] = $release;
+					break;
+				case ESS_PROMOTED:
+					$promoted[(int)$release[0]->rid] = $release;
+					break;
+				default:
+					$remainder[(int)$release[0]->rid] = $release;
+			}
 		}
+		$result = array_merge($result, $promoted, $remainder);
+
+		// Set the mapping for easy access to releases by type
+		$this->_status_mapping = array();
+		foreach ($result as $index => $release) {
+			$this->_status_mapping[$release[0]->status] = $index;
+		}
+
+		return $result;
 	}
 
 	private function _fetch_type($type, $version = NULL) {
@@ -230,8 +246,6 @@ class ReleaseModelTest extends CIUnit_TestCase {
 	}
 
 	public function testInabilityCloneReleaseInvalidRID() {
-		$original = $this->_fetch_type(ESS_PUBLISHED);
-
 		$this->assertFalse($this->_rm->clone_release(1000, array('name' => 'New Release')));
 	}
 
@@ -429,7 +443,7 @@ class ReleaseModelTest extends CIUnit_TestCase {
 
 	public function testAbilityRevertToEarlierVersionValidID() {
 		$revert_to   = 1;
-		$expected    = $this->_fetch_type(ESS_PUBLISHED, $revert_to);
+		$expected    = $this->_fetch_type($this->_type_with_versions, $revert_to);
 		$new_version = $this->_rm->revert($expected->rid, $revert_to);
 
 		$this->assertEquals($expected->name, $new_version->name);
@@ -440,18 +454,18 @@ class ReleaseModelTest extends CIUnit_TestCase {
 	}
 
 	public function testInabilityRevertToCurrentVersion() {
-		$expected = $this->_fetch_type(ESS_PUBLISHED);
+		$expected = $this->_fetch_type($this->_type_with_versions);
 		$this->assertFalse($this->_rm->revert($expected->rid, $expected->version));
 	}
 
 	public function testInablityRevertToInvalidVersion() {
-		$expected = $this->_fetch_type(ESS_PUBLISHED);
+		$expected = $this->_fetch_type($this->_type_with_versions);
 		$this->assertFalse($this->_rm->revert($expected->rid, $expected->version + 1));
 	}
 
 	public function testRevertingVersionIncrementsVersion() {
 		$revert_to = 1;
-		$current   = $this->_fetch_type(ESS_PUBLISHED);
+		$current   = $this->_fetch_type($this->_type_with_versions);
 
 		$new_version = $this->_rm->revert($current->rid, $revert_to);
 		$this->assertEquals($current->version + 1, $new_version->version);

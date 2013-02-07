@@ -1,48 +1,48 @@
 1:
-	rid: 1
-	version: 1
-	name: 'test release'
-	bukkit: '0.1'
-	change_log: 'http://nowhere.com'
-	notes: 'Some interesting notes'
-	status: 'deleted'
+  rid: 1
+  version: 1
+  name: 'Release 1.0'
+  bukkit:
+  change_log:
+  notes:
+  status: 'default'
 2:
-	rid: 2
-	version: 1
-	name: '1'
-	bukkit: '0.2'
-	change_log: 'http://nowhere.com/notes1'
-	notes: 'Notes about release 1'
-	status: 'published'
+  rid: 1
+  version: 2
+  name: 'Release 2.9.6'
+  bukkit: 'CB 1.4.5'
+  change_log: 'http://some.url.com'
+  notes: 'Just some interesting notes'
+  status: 'default'
 3:
-	rid: 2
-	version: 2
-	name: '1.0.0'
-	bukkit: '0.1.5'
-	change_log: 'http://nowhere.com/notes2'
-	notes: 'Notes about release 1.0.0'
-	status: 'published'
+  rid: 2
+  version: 1
+  name: 'Prerelease 2.9.7.1'
+  bukkit: '2561'
+  change_log: 'http://some.url.com/1'
+  notes: ''
+  status: 'published'
+4:
+  rid: 3
+  version: 1
+  name: 'Prelease 2.9.7.2'
+  bukkit: '2561'
+  change_log: 'http://some.url.com/2'
+  notes: ''
+  status: 'unpublished'
 5:
-	rid: 3
-	version: 1
-	name: '1.1.0'
-	bukkit: '0.1.5'
-	change_log: 'http://nowhere.com/notes/3'
-	notes: 'Notes about release 0.1.5'
-	status: 'promoted'
+  rid: 4
+  version: 1
+  name: 'Prerelease 2.10.1.1'
+  bukkit: '2561'
+  change_log: 'http://some.url.com/3'
+  notes: ''
+  status: 'promoted'
 6:
-	rid: 4
-	version: 1
-	name: '1.2.0'
-	bukkit: '0.2'
-	change_log: 'http://nowhere.com/2'
-	notes: 'Notes about release 1.2.0'
-	status: 'default'
-7:
-	rid: 5
-	version: 1
-	name: '2.0.0'
-	bukkit: '1.0'
-	change_log: 'http://nowhere.com/major'
-	notes: 'Notes about this big release 2'
-	status: 'unpublished'
+  rid: 5
+  version: 1
+  name: 'Prerelease 2.10.1.2'
+  bukkit: '2561'
+  change_log: 'http://some.url.com/3'
+  notes: ''
+  status: 'deleted'

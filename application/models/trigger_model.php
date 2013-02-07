@@ -106,7 +106,7 @@ class Trigger_model extends CI_Model {
 			return FALSE;
 		}
 
-		$revert_to->version = $trigger->version+1;
+		$revert_to->version = $this->_get_latest_version($trigger->tid);
 		$this->db->insert('cmd_trigger', $revert_to);
 		if($this->db->affected_rows() == 1) {
 			return $revert_to;

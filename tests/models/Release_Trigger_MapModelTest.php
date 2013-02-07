@@ -31,7 +31,7 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase {
 		$expected = array();
 		$rid      = $this->cmd_release_trigger_map_fixt[0]->rid;
 		foreach ($this->cmd_release_trigger_map_fixt as $map) {
-			if ($map->rid == $rid) {
+			if ($map->rid == $rid && $map->status) {
 				$expected[$map->tid] = $map;
 			}
 		}
@@ -96,7 +96,7 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase {
 		$deleted  = $this->cmd_release_trigger_map_fixt[0];
 		$expected = array();
 		foreach ($this->cmd_release_trigger_map_fixt as $mapping) {
-			if ($mapping->rid == $deleted->rid && $mapping->tid != $deleted->tid) {
+			if ($mapping->rid == $deleted->rid && $mapping->tid != $deleted->tid && $mapping->status) {
 				$expected[$mapping->tid] = $mapping;
 			}
 		}
@@ -111,7 +111,7 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase {
 		$unknown->rid = 1000;
 		$expected     = array();
 		foreach ($this->cmd_release_trigger_map_fixt as $mapping) {
-			if ($mapping->rid == $deleted->rid) {
+			if ($mapping->rid == $deleted->rid && $mapping->status) {
 				$expected[$mapping->tid] = $mapping;
 			}
 		}
@@ -125,7 +125,7 @@ class Release_Trigger_MapModelTest extends CIUnit_TestCase {
 		$deleted->tid = 1000;
 		$expected     = array();
 		foreach ($this->cmd_release_trigger_map_fixt as $mapping) {
-			if ($mapping->rid == $deleted->rid) {
+			if ($mapping->rid == $deleted->rid && $mapping->status) {
 				$expected[$mapping->tid] = $mapping;
 			}
 		}

@@ -1,30 +1,258 @@
 1:
 	pid: 1
 	version: 1
-	perm: 'perm1'
-	pdesc: '1st Permission'
+	perm: 'back'
+	pdesc: 'Allow access to the /back command'
 	status: 1
 2:
 	pid: 1
 	version: 2
-	perm: 'perm 1'
-	pdesc: '1st Permission'
+	perm: 'essentials.back'
+	pdesc: 'Allow access to the /back command'
 	status: 1
 3:
 	pid: 2
 	version: 1
-	perm: 'perm 2'
-	pdesc: '2nd Permission'
+	perm: 'essentials.back.ondeath'
+	pdesc: 'Give the permission to allow players to use /back to go to their death spot'
 	status: 1
 4:
 	pid: 3
 	version: 1
-	perm: 'perm 3'
-	pdesc: '3rd Permission'
+	perm: 'essentials.balance'
+	pdesc: 'Allow access to the /balance command'
 	status: 1
 5:
 	pid: 4
 	version: 1
-	perm: 'deleted perm'
-	pdesc: 'Deleted Permission'
+	perm: 'essentials.balance.others'
+	pdesc: 'Allows you to see the balance of other players'
+	status: 1
+6:
+	pid: 5
+	version: 1
+	perm: 'essentials.help'
+	pdesc: 'Allow access to the /help command.'
+	status: 1
+7:
+	pid: 6
+	version: 1
+	perm: 'essentials.help.[pluginname]'
+	pdesc: 'Manually adds the commands from a plugin to this group\'s /help.  Name is all lowercase.'
+	status: 1
+8:
+	pid: 7
+	version: 1
+	perm: 'essentials.depth'
+	pdesc: 'Allow access to the /depth command'
+	status: 1
+9:
+	pid: 8
+	version: 1
+	perm: 'essentials.getpos'
+	pdesc: 'Allow access to the /getpos command.'
+	status: 1
+10:
+	pid: 9
+	version: 1
+	perm: 'essentials.getpos.others'
+	pdesc: 'Allow user to get the position of another player.'
+	status: 1
+11:
+	pid: 10
+	version: 1
+	perm: 'essentials.'
+	pdesc: 'This is a deleted permission'
+	status: 0
+12:
+	pid: 11
+	version: 1
+	perm: 'essentials.back'
+	pdesc: 'Allow access to the /back command'
+	status: 1
+13:
+	pid: 12
+	version: 1
+	perm: 'essentials.back.ondeath'
+	pdesc: 'Give the permission to allow players to use /back to go to their death spot'
+	status: 1
+14:
+	pid: 13
+	version: 1
+	perm: 'essentials.balance'
+	pdesc: 'Allow access to the /balance command'
+	status: 1
+15:
+	pid: 14
+	version: 1
+	perm: 'essentials.balance.others'
+	pdesc: 'Allows you to see the balance of other players'
+	status: 1
+16:
+	pid: 15
+	version: 1
+	perm: 'essentials.help'
+	pdesc: 'Allow access to the /help command.'
+	status: 1
+17:
+	pid: 16
+	version: 1
+	perm: 'essentials.help.[pluginname]'
+	pdesc: 'Manually adds the commands from a plugin to this group\'s /help.  Name is all lowercase.'
+	status: 1
+18:
+	pid: 17
+	version: 1
+	perm: 'essentials.depth'
+	pdesc: 'Allow access to the /depth command'
+	status: 1
+19:
+	pid: 18
+	version: 1
+	perm: 'essentials.getpos'
+	pdesc: 'Allow access to the /getpos command.'
+	status: 1
+20:
+	pid: 19
+	version: 1
+	perm: 'essentials.getpos.others'
+	pdesc: 'Allow user to get the position of another player.'
+	status: 1
+21:
+	pid: 20
+	version: 1
+	perm: 'essentials.back'
+	pdesc: 'Allow access to the /back command'
+	status: 1
+22:
+	pid: 21
+	version: 1
+	perm: 'essentials.back.ondeath'
+	pdesc: 'Give the permission to allow players to use /back to go to their death spot'
+	status: 0
+23:
+	pid: 22
+	version: 1
+	perm: 'essentials.balance'
+	pdesc: 'Allow access to the /balance command'
+	status: 1
+24:
+	pid: 23
+	version: 1
+	perm: 'essentials.balance.others'
+	pdesc: 'Allows you to see the balance of other players'
+	status: 1
+25:
+	pid: 24
+	version: 1
+	perm: 'essentials.help'
+	pdesc: 'Allow access to the /help command.'
+	status: 1
+26:
+	pid: 25
+	version: 1
+	perm: 'essentials.help.[pluginname]'
+	pdesc: 'Manually adds the commands from a plugin to this group\'s /help.  Name is all lowercase.'
+	status: 1
+27:
+	pid: 26
+	version: 1
+	perm: 'essentials.depth'
+	pdesc: 'Allow access to the /depth command'
+	status: 1
+28:
+	pid: 27
+	version: 1
+	perm: 'essentials.getpos'
+	pdesc: 'Allow access to the /getpos command.'
+	status: 1
+29:
+	pid: 28
+	version: 1
+	perm: 'essentials.getpos.others'
+	pdesc: 'Allow user to get the position of another player.'
+	status: 1
+30:
+	pid: 29
+	version: 1
+	perm: 'essentials.back'
+	pdesc: 'Allow access to the /back command'
+	status: 1
+31:
+	pid: 30
+	version: 1
+	perm: 'essentials.balance'
+	pdesc: 'Allow access to the /balance command'
+	status: 0
+32:
+	pid: 31
+	version: 1
+	perm: 'essentials.balance.others'
+	pdesc: 'Allows you to see the balance of other players'
+	status: 0
+33:
+	pid: 32
+	version: 1
+	perm: 'essentials.help'
+	pdesc: 'Allow access to the /help command.'
+	status: 1
+34:
+	pid: 33
+	version: 1
+	perm: 'essentials.help.[pluginname]'
+	pdesc: 'Manually adds the commands from a plugin to this group\'s /help.  Name is all lowercase.'
+	status: 1
+35:
+	pid: 34
+	version: 1
+	perm: 'essentials.depth'
+	pdesc: 'Allow access to the /depth command'
+	status: 1
+36:
+	pid: 35
+	version: 1
+	perm: 'essentials.getpos'
+	pdesc: 'Allow access to the /getpos command.'
+	status: 1
+37:
+	pid: 36
+	version: 1
+	perm: 'essentials.getpos.others'
+	pdesc: 'Allow user to get the position of another player.'
+	status: 1
+38:
+	pid: 37
+	version: 1
+	perm: 'essentials.back'
+	pdesc: 'Allow access to the /back command'
+	status: 0
+39:
+	pid: 38
+	version: 1
+	perm: 'essentials.help'
+	pdesc: 'Allow access to the /help command.'
+	status: 0
+40:
+	pid: 39
+	version: 1
+	perm: 'essentials.help.[pluginname]'
+	pdesc: 'Manually adds the commands from a plugin to this group\'s /help.  Name is all lowercase.'
+	status: 0
+41:
+	pid: 40
+	version: 1
+	perm: 'essentials.depth'
+	pdesc: 'Allow access to the /depth command'
+	status: 0
+42:
+	pid: 41
+	version: 1
+	perm: 'essentials.getpos'
+	pdesc: 'Allow access to the /getpos command.'
+	status: 0
+43:
+	pid: 42
+	version: 1
+	perm: 'essentials.getpos.others'
+	pdesc: 'Allow user to get the position of another player.'
 	status: 0

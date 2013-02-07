@@ -74,7 +74,7 @@ class TriggerModelTest extends CIUnit_TestCase {
 		);
 
 		$expected = (object)array(
-			'tid'     => count($this->cmd_trigger_fixt) + 1,
+			'tid'     => $this->_max_tid + 1,
 			'version' => 1,
 			'cat'     => $data['cat'],
 			'trigger' => $data['trigger'],

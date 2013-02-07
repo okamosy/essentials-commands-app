@@ -533,11 +533,11 @@ class Command_model extends CI_Model {
 
 			$trigger = $this->_ci->Trigger_model->revert($tid, $version);
 			if(empty($trigger)) {
-				throw new Exception();
+				throw new Exception('failed to revert trigger');
 			}
 
 			if(!$this->_ci->Release_Trigger_Map_model->edit($rid, $trigger->tid, $trigger->version)) {
-				throw new Exception();
+				throw new Exception('failed to update rtm');
 			}
 
 			$mapping = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $tid, 't_version' => $current_trigger->t_version));
@@ -545,7 +545,7 @@ class Command_model extends CI_Model {
 				$new_map = clone $map;
 				$new_map->t_version = $trigger->version;
 				if(!$this->_ci->Trigger_Perm_Map_model->edit($new_map, (array)$map)) {
-					throw new Exception();
+					throw new Exception('failed to update tpm');
 				}
 			}
 		}
@@ -746,7 +746,7 @@ class Command_model extends CI_Model {
 
 			$perm = $this->_ci->Perm_model->revert($pid, $version);
 			if(empty($perm)) {
-				throw new Exception();
+				throw new Exception('Failed reverting permission');
 			}
 
 			$updated_map = array(
@@ -759,11 +759,11 @@ class Command_model extends CI_Model {
 			$current_map = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $trigger->tid, 't_version' => $trigger->t_version, 'pid' => $pid));
 			if(empty($current_map[$pid])) {
 				if(!$this->_ci->Trigger_Perm_Map_model->insert($updated_map)) {
-					throw new Exception();
+					throw new Exception('Failed updating empty TPM');
 				}
 			}
 			elseif(!$this->_ci->Trigger_Perm_Map_model->edit($updated_map, (array)$current_map[$pid])) {
-				throw new Exception();
+				throw new Exception('Failed updating TPM');
 			}
 
 		}
@@ -776,7 +776,7 @@ class Command_model extends CI_Model {
 		return $perm;
 	}
 
-	public function search($text, $release = '') {
+	public function search($text, $release = '', $type = 'trigger') {
 		if(empty($text)) {
 			return FALSE;
 		}
@@ -788,12 +788,23 @@ class Command_model extends CI_Model {
 			        implode("','", array(ESS_DEFAULT, ESS_PUBLISHED, ESS_PROMOTED)),
 			        $this->db->escape_like_str($release));
 
+		switch(strtolower($type)) {
+			case 'trigger':
+				return $this->_search_trigger($search_string, $release_filter);
+			case 'perm':
+				return $this->_search_perm($search_string, $release_filter);
+			default:
+				return FALSE;
+		}
+	}
+
+	private function _search_trigger($text, $release) {
 		$base_sql = "
-			SELECT t . *
+			SELECT r.rid, t.*
 			FROM cmd_release r
 				JOIN cmd_release_trigger_map rtm ON ( r.rid = rtm.rid )
 				JOIN cmd_trigger t ON ( t.tid = rtm.tid AND t.version = rtm.t_version )
-			WHERE {$release_filter}
+			WHERE {$release}
 				AND rtm.status =1
 				AND t.status =1
 				AND (%s)
@@ -807,7 +818,66 @@ class Command_model extends CI_Model {
 
 		$sql = '';
 		foreach($permutations as $permute) {
-			$sql .= sprintf("(%s) UNION ", sprintf($base_sql, sprintf($permute, $search_string, $search_string)));
+			$sql .= sprintf("(%s) UNION ", sprintf($base_sql, sprintf($permute, $text, $text)));
+		}
+		$sql = rtrim($sql, ' UNION');
+
+		$query = $this->db->query($sql);
+
+		$results = array();
+		$num_results = 0;
+		foreach($query->result() as $row) {
+			$perm_list = $this->fetch_permissions($row->rid, $row->tid);
+			$perms = array();
+			foreach($perm_list as $perm) {
+				$perms[] = (object)array(
+					'perm' => $perm->perm,
+					'pdesc' => $perm->pdesc,
+				);
+			}
+
+			$results[] = (object)array(
+				'trigger' => $row->trigger,
+				'alias' => $row->alias,
+				'desc' => $row->desc,
+				'instr' => $row->instr,
+				'syntax' => $row->syntax,
+				'perms' => $perms,
+			);
+
+			if(++$num_results >= MAX_SEARCH_RESULTS) {
+				break;
+			}
+		}
+
+		return $results;
+	}
+
+	private function _search_perm($text, $release) {
+		$base_sql = "
+			SELECT p.perm, p.pdesc, t.trigger, t.alias, t.desc, t.instr, t.syntax
+			FROM cmd_perm p
+			JOIN cmd_trigger_perm_map tpm ON (p.pid=tpm.pid AND p.version=tpm.p_version)
+			JOIN cmd_trigger t ON (t.tid=tpm.tid AND t.version=tpm.t_version)
+			JOIN cmd_release_trigger_map rtm ON (t.tid=rtm.tid AND t.version=rtm.t_version)
+			JOIN cmd_release r ON (r.rid=rtm.rid)
+			WHERE {$release}
+				AND rtm.status =1
+				AND tpm.status =1
+				AND t.status =1
+				AND p.status =1
+				AND (%s)
+			GROUP BY r.rid, t.tid, p.pid
+			ORDER BY r.version DESC, t.version DESC, p.version DESC
+		";
+		$permutations = array(
+			"p.perm LIKE '%s' OR p.pdesc LIKE '%s'",
+			"p.perm LIKE '%%%s%%' OR p.pdesc LIKE '%%%s%%'",
+		);
+
+		$sql = '';
+		foreach($permutations as $permute) {
+			$sql .= sprintf("(%s) UNION ", sprintf($base_sql, sprintf($permute, $text, $text)));
 		}
 		$sql = rtrim($sql, ' UNION');
 
@@ -817,8 +887,7 @@ class Command_model extends CI_Model {
 		$num_results = 0;
 		foreach($query->result() as $row) {
 			$results[] = $row;
-
-			if(++$num_results >= MAX_SEARCH_RESULTS) {
+			if(++$num_results >= MAX_SEARCH_RESULTS || strcasecmp($row->perm, $text) === 0) {
 				break;
 			}
 		}

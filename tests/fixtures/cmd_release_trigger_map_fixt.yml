@@ -1,7 +1,7 @@
 1:
 	rid: 1
 	tid: 1
-	t_version: 1
+	t_version: 2
 	status: 1
 2:
 	rid: 1
@@ -9,27 +9,117 @@
 	t_version: 1
 	status: 1
 3:
-	rid: 2
+	rid: 1
 	tid: 3
 	t_version: 1
 	status: 1
 4:
-	rid: 2
-	tid: 1
-	t_version: 2
+	rid: 1
+	tid: 4
+	t_version: 1
 	status: 1
 5:
-	rid: 3
-	tid: 1
+	rid: 1
+	tid: 5
 	t_version: 1
 	status: 1
 6:
-	rid: 4
-	tid: 1
-	t_version: 1
-	status: 1
+  rid: 1
+  tid: 6
+  t_version: 1
+  status: 0
 7:
-	rid: 5
-	tid: 1
+	rid: 2
+	tid: 7
 	t_version: 1
 	status: 1
+8:
+	rid: 2
+	tid: 8
+	t_version: 1
+	status: 1
+9:
+	rid: 2
+	tid: 9
+	t_version: 1
+	status: 1
+10:
+	rid: 2
+	tid: 10
+	t_version: 1
+	status: 1
+11:
+	rid: 2
+	tid: 11
+	t_version: 1
+	status: 1
+12:
+	rid: 3
+	tid: 12
+	t_version: 1
+	status: 1
+13:
+	rid: 3
+	tid: 13
+	t_version: 1
+	status: 1
+14:
+	rid: 3
+	tid: 14
+	t_version: 1
+	status: 1
+15:
+	rid: 3
+	tid: 15
+	t_version: 1
+	status: 1
+16:
+	rid: 3
+	tid: 16
+	t_version: 1
+	status: 1
+17:
+	rid: 4
+	tid: 17
+	t_version: 1
+	status: 1
+18:
+	rid: 4
+	tid: 18
+	t_version: 1
+	status: 0
+19:
+	rid: 4
+	tid: 19
+	t_version: 1
+	status: 1
+20:
+	rid: 4
+	tid: 20
+	t_version: 1
+	status: 1
+21:
+	rid: 4
+	tid: 21
+	t_version: 1
+	status: 1
+17:
+	rid: 5
+	tid: 22
+	t_version: 1
+	status: 0
+19:
+	rid: 5
+	tid: 23
+	t_version: 1
+	status: 0
+20:
+	rid: 5
+	tid: 24
+	t_version: 1
+	status: 0
+21:
+	rid: 5
+	tid: 25
+	t_version: 1
+	status: 0

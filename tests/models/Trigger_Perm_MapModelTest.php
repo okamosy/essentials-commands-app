@@ -81,6 +81,13 @@ class Trigger_Perm_MapModelTest extends CIUnit_TestCase {
 			$data['pid'] => (object)$data,
 		);
 
+		// Look for others that happen to match
+		foreach ($this->cmd_trigger_perm_map_fixt as $map) {
+			if ($map->tid == $data['tid'] && $map->t_version == $data['t_version'] && $map->status) {
+				$expected[$map->pid] = $map;
+			}
+		}
+
 		$this->assertTrue($this->_mm->insert($data));
 		$this->assertEquals($expected, $this->_mm->fetch($this->_trigger($data)));
 	}
