@@ -808,24 +808,29 @@ class Command_model extends CI_Model {
 				AND rtm.status =1
 				AND t.status =1
 				AND (%s)
-			GROUP BY r.rid
-			ORDER BY r.version DESC";
+			GROUP BY t.tid
+			ORDER BY t.version DESC";
 		$permutations = array(
 			"t.trigger LIKE '%s' OR t.alias LIKE '%s'",
 			"t.trigger LIKE '%%%s%%' OR t.alias LIKE '%%%s%%'",
-			"t.instr LIKE '%%%s%%' OR t.syntax LIKE '%%%s%%'",
+			"t.instr LIKE '%%%s%%' OR t.desc LIKE '%%%s%%'",
 		);
 
 		$sql = '';
 		foreach($permutations as $permute) {
 			$sql .= sprintf("(%s) UNION ", sprintf($base_sql, sprintf($permute, $text, $text)));
 		}
-		$sql = rtrim($sql, ' UNION');
+		$sql = sprintf("
+			SELECT *
+			FROM (
+				%s
+			) triggers
+			LIMIT %s
+			", rtrim($sql, ' UNION'), MAX_SEARCH_RESULTS);
 
 		$query = $this->db->query($sql);
 
 		$results = array();
-		$num_results = 0;
 		foreach($query->result() as $row) {
 			$perm_list = $this->fetch_permissions($row->rid, $row->tid);
 			$perms = array();
@@ -845,7 +850,9 @@ class Command_model extends CI_Model {
 				'perms' => $perms,
 			);
 
-			if(++$num_results >= MAX_SEARCH_RESULTS) {
+			if(strcasecmp($row->trigger, $text) === 0 ||
+			   in_array($text, explode(', ', $row->alias))
+			) {
 				break;
 			}
 		}
@@ -879,7 +886,12 @@ class Command_model extends CI_Model {
 		foreach($permutations as $permute) {
 			$sql .= sprintf("(%s) UNION ", sprintf($base_sql, sprintf($permute, $text, $text)));
 		}
-		$sql = rtrim($sql, ' UNION');
+		$sql = sprintf("
+		SELECT *
+		FROM (
+			%s
+		) perms
+		LIMIT %s", rtrim($sql, ' UNION'), MAX_SEARCH_RESULTS);
 
 		$query = $this->db->query($sql);
 

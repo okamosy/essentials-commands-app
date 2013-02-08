@@ -36,6 +36,29 @@ class Docs extends CI_Controller
 		$this->index('commands', $rid);
 	}
 
+	public function search() {
+		$term = !empty($_GET['term']) ? $_GET['term'] : '';
+		$release = !empty($_GET['release']) ? $_GET['release'] : '';
+		$type = !empty($_GET['type']) ? $_GET['type'] : '';
+
+		$type = empty($type) ? 'trigger' : $type;
+
+		if(($results = $this->Command_model->search($term, $release, $type)) === FALSE) {
+			$data = array(
+				'status' => FALSE,
+				'message' => "There was a problem searching for your command. Please check your syntax and try again.",
+			);
+		}
+		else {
+			$data = array(
+				'status' => TRUE,
+				'results' => $results,
+			);
+		}
+
+		exit(json_encode($data));
+	}
+
 	public function fetch($type = '', $rid = 0, $id = 0) {
 		switch (strtolower($type)) {
 			case 'release':

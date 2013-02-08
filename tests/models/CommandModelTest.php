@@ -1108,11 +1108,24 @@ class ControlModelTest extends CIUnit_TestCase {
 
 	public function testSearchReturnsMatchingInstrAndDesc() {
 		$release  = $this->_fetch_release(ESS_DEFAULT);
-		$trigger  = reset($this->_fetch_triggers($release->rid));
-		$expected = $this->_build_search_result($trigger);
+		$source_trigger  = reset($this->_fetch_triggers($release->rid));
+		$instr_expected = array();
+		$syntax_expected = array();
 
-		$this->assertEquals($expected, $this->_cm->search($trigger->instr));
-		$this->assertEquals($expected, $this->_cm->search($trigger->syntax));
+		foreach($this->_fetch_triggers($release->rid) as $trigger) {
+
+			if(stripos($trigger->instr, $source_trigger->instr) !== FALSE) {
+				$instr_expected += $this->_build_search_result($trigger);
+			}
+
+			if(stripos($trigger->desc, $source_trigger->desc) !== FALSE) {
+				$syntax_expected += $this->_build_search_result($trigger);
+			}
+		}
+
+		var_dump($source_trigger);
+		$this->assertEquals($instr_expected, $this->_cm->search($source_trigger->instr));
+		$this->assertEquals($syntax_expected, $this->_cm->search($source_trigger->desc));
 	}
 
 	public function testSearchPartialReturnsMultipleResults() {
