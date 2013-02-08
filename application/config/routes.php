@@ -42,6 +42,7 @@ $route['default_controller']	= "docs";
 $route['404_override']			= '';
 $route['permissions']			= 'docs/permissions';
 $route['commands/(:num)']       = 'docs/commands/$1';
+$route['search']            = 'docs/search';
 $route['logout']				= 'login/logout';
 
 /* End of file routes.php */
