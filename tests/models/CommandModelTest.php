@@ -6,9 +6,7 @@
 
 class ControlModelTest extends CIUnit_TestCase {
 	private $_cm;
-	private $_max_rid;
-	private $_max_tid;
-	private $_max_pid;
+	private $_max_id;
 	private $_max_version;
 	private $_has_versions;
 
@@ -27,7 +25,9 @@ class ControlModelTest extends CIUnit_TestCase {
 		              'cmd_trigger',
 		              'cmd_release_trigger_map',
 		              'cmd_perm',
-		              'cmd_trigger_perm_map');
+		              'cmd_trigger_perm_map',
+					  'cmd_log'
+		);
 
 		$this->cmd_user_fixt                = $this->_initialize_users($this->cmd_user_fixt);
 		$this->_release_status_mapping      = $this->_initialize_releases();
@@ -35,19 +35,11 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->cmd_release_trigger_map_fixt = $this->_initialize_rt_mapping();
 		$this->cmd_perm_fixt                = $this->_initialize_perms();
 		$this->cmd_trigger_perm_map_fixt    = $this->_initialize_tp_mapping();
+		$this->cmd_log_fixt                 = $this->_initialize_log();
 	}
 
 	public function tearDown() {
 		$this->_cm->logout();
-	}
-
-	private function _objectify_fixture($fixture_list) {
-		$list = array();
-		foreach ($fixture_list as $fixture) {
-			$list[] = (object)$fixture;
-		}
-
-		return $list;
 	}
 
 	private function _initialize_users($user_list) {
@@ -64,13 +56,15 @@ class ControlModelTest extends CIUnit_TestCase {
 
 	private function _initialize_releases() {
 		$releases = array();
+		$this->_max_id['rid'] = 0;
+
 		// Group the releases by rid
 		foreach ($this->cmd_release_fixt as $release) {
 			$releases[$release['rid']][] = (object)$release;
 			if (empty($this->_has_versions['rid']) && count($releases[$release['rid']]) > 1) {
 				$this->_has_versions['rid'] = $release['status'];
 			}
-			$this->_max_rid                             = ($release['rid'] > $this->_max_rid) ? $release['rid'] : $this->_max_rid;
+			$this->_max_id['rid']                             = ($release['rid'] > $this->_max_id['rid']) ? $release['rid'] : $this->_max_id['rid'];
 			$this->_max_version['rid'][$release['rid']] = (empty($this->_max_version['rid'][$release['rid']]) || $release['version'] > $this->_max_version['rid'][$release['rid']]) ?
 				$release['version'] : $this->_max_version['rid'][$release['rid']];
 		}
@@ -112,10 +106,10 @@ class ControlModelTest extends CIUnit_TestCase {
 
 	private function _initialize_triggers() {
 		$triggers       = array();
-		$this->_max_tid = 0;
+		$this->_max_id['tid'] = 0;
 		foreach ($this->cmd_trigger_fixt as $trigger) {
 			$triggers[$trigger['tid']][$trigger['version']] = (object)$trigger;
-			$this->_max_tid                                 = ($trigger['tid'] > $this->_max_tid) ? $trigger['tid'] : $this->_max_tid;
+			$this->_max_id['tid']                                 = ($trigger['tid'] > $this->_max_id['tid']) ? $trigger['tid'] : $this->_max_id['tid'];
 			$this->_max_version['tid'][$trigger['tid']]     = (empty($this->_max_version['tid'][$trigger['tid']]) || $trigger['version'] > $this->_max_version['tid'][$trigger['tid']]) ?
 				$trigger['version'] : $this->_max_version['tid'][$trigger['tid']];
 
@@ -136,9 +130,11 @@ class ControlModelTest extends CIUnit_TestCase {
 
 	private function _initialize_perms() {
 		$perms = array();
+		$this->_max_id['pid'] = 0;
+
 		foreach ($this->cmd_perm_fixt as $perm) {
 			$perms[$perm['pid']][$perm['version']]   = (object)$perm;
-			$this->_max_pid                          = ($perm['pid'] > $this->_max_pid) ? $perm['pid'] : $this->_max_pid;
+			$this->_max_id['pid']                          = ($perm['pid'] > $this->_max_id['pid']) ? $perm['pid'] : $this->_max_id['pid'];
 			$this->_max_version['pid'][$perm['pid']] = (empty($this->_max_version['pid'][$perm['pid']]) || $perm['version'] > $this->_max_version['pid'][$perm['pid']]) ?
 				$perm['version'] : $this->_max_version['pid'][$perm['pid']];
 
@@ -184,6 +180,18 @@ class ControlModelTest extends CIUnit_TestCase {
 		return $mapping;
 	}
 
+	private function _initialize_log() {
+		$log = array();
+		$this->_max_id['lid'] = 0;
+
+		foreach(array_reverse($this->cmd_log_fixt) as $row) {
+			$log[] = (object)$row;
+			$this->_max_id['lid'] = ($row['lid'] > $this->_max_id['lid']) ? $row['lid'] : $this->_max_id['lid'];
+		}
+
+		return $log;
+	}
+
 	private function _fetch_release($type) {
 		return $this->cmd_release_fixt[$this->_release_status_mapping[$type]][0];
 	}
@@ -223,18 +231,6 @@ class ControlModelTest extends CIUnit_TestCase {
 		}
 
 		return $triggers;
-	}
-
-	private function _fetch_trigger_version($tid, $version) {
-		foreach ($this->cmd_trigger_fixt as $trigger_versions) {
-			foreach ($trigger_versions as $trigger) {
-				if ($trigger->tid == $tid && $trigger->version == $version) {
-					return $trigger;
-				}
-			}
-		}
-
-		return FALSE;
 	}
 
 	private function _fetch_trigger_by_tid($tid) {
@@ -332,12 +328,24 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testAbilityLoginValidCredentials() {
-		$user = $this->cmd_user_fixt[0];
+		$user = reset($this->cmd_user_fixt);
 		$this->assertTrue($this->_cm->authenticate($user->username, $user->password));
 	}
 
 	public function testValidLoginEventIsLogged() {
-		$this->markTestIncomplete();
+		$user = reset($this->cmd_user_fixt);
+		$this->_cm->authenticate($user->username, $user->password);
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid']+1,
+			'username' => $user->username,
+			'timestamp' =>  time(),
+			'event' => Log_model::EVENT_LOGIN,
+			'data' =>  '',
+		);
+
+		$log = $this->_cm->fetch_log();
+		$this->assertEquals($expected, reset($log));
 	}
 
 	public function testInabilityLoginInvalidCredentials() {
@@ -345,7 +353,17 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testInvalidLoginEventIsLogged() {
-		$this->markTestIncomplete();
+		$username = 'invalid';
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 1,
+			'username' => 'Anonymous',
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_INVALID_LOGIN,
+			'data' => 'Invalid login attempt: '.$username,
+		);
+
+		$this->_cm->authenticate($username, 'user');
+		$this->assertEquals($expected, reset($this->_cm->fetch_log()));
 	}
 
 	public function testLoginSetsSession() {
@@ -369,7 +387,20 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testLogoutEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+
+		$user = $this->CI->session->userdata('user');
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_LOGOUT,
+			'data' => '',
+		);
+
+		$this->_cm->logout();
+
+		$this->assertEquals($expected, reset($this->_cm->fetch_log()));
 	}
 
 	public function testAbilityLogoutNotLoggedIn() {
@@ -677,7 +708,7 @@ class ControlModelTest extends CIUnit_TestCase {
 	public function testAbilityCloneReleaseAuthenticated() {
 		$release        = $this->_fetch_release(ESS_PUBLISHED);
 		$clone          = clone $release;
-		$clone->rid     = $this->_max_rid + 1;
+		$clone->rid     = $this->_max_id['rid'] + 1;
 		$clone->name    = 'New Release';
 		$clone->version = 1;
 		$clone->status  = ESS_UNPUBLISHED;
@@ -687,17 +718,32 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->_login();
 
 		$this->assertEquals($clone, $this->_cm->clone_release($release->rid, array('name' => $clone->name)));
-		$this->assertEquals(count($triggers), count($this->_cm->fetch_triggers($clone->rid)));
+		$this->assertcount(count($triggers), $this->_cm->fetch_triggers($clone->rid));
 	}
 
 	public function testCloneReleaseEventIsLogged() {
-		$this->markTestIncomplete();
+		$release        = $this->_fetch_release(ESS_PUBLISHED);
+		$new_name = 'New Release';
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_INSERT,
+			'data' => sprintf("Release '%s' cloned to '%s'", $release->name, $new_name),
+		);
+
+		$this->_cm->clone_release($release->rid, array('name' => $new_name));
+
+		$this->assertContains($expected, $this->_cm->fetch_log());
 	}
 
 	public function testAbilityCloneUnpublishedReleaseAuthenticated() {
 		$release        = $this->_fetch_release(ESS_UNPUBLISHED);
 		$clone          = clone $release;
-		$clone->rid     = $this->_max_rid + 1;
+		$clone->rid     = $this->_max_id['rid'] + 1;
 		$clone->name    = 'New Release';
 		$clone->version = 1;
 		$clone->status  = ESS_UNPUBLISHED;
@@ -715,7 +761,7 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->_login();
 
 		$this->assertFalse($this->_cm->clone_release($release->rid, array('name' => 'New Name')));
-		$this->assertFalse($this->_cm->fetch_release($this->_max_rid + 1));
+		$this->assertFalse($this->_cm->fetch_release($this->_max_id['rid'] + 1));
 	}
 
 	public function testInabilityEditReleaseAnonymous() {
@@ -753,7 +799,23 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testEditReleaseEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+
+		$release           = $this->_fetch_release(ESS_UNPUBLISHED);
+		$user = $this->CI->session->userdata('user');
+		$name = 'Edited Name';
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_EDIT,
+			'data' => sprintf("Release %d edited: name '%s' => '%s'", $release->rid, $release->name, $name),
+		);
+
+		$this->_cm->edit_release($release->rid, array('name' => $name));
+
+		$this->assertContains($expected, $this->_cm->fetch_log());
 	}
 
 	public function testInabilityChangeReleaseStatusAnonymous() {
@@ -782,7 +844,21 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testChangeReleaseStatusEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release = $this->_fetch_release(ESS_PUBLISHED);
+		$status = ESS_PROMOTED;
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid']+2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_EDIT,
+			'data' => sprintf("Release %d status changed: '%s' => '%s'", $release->rid, $release->status, $status),
+		);
+
+		$this->_cm->update_release_status($release->rid, $status);
+		$this->assertContains($expected, $this->_cm->fetch_log());
 	}
 
 	public function testInabilityDeleteReleaseAnonymous() {
@@ -803,7 +879,20 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testDeleteReleaseEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release = $this->_fetch_release(ESS_PUBLISHED);
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_DELETE,
+			'data' => sprintf("Release %d deleted", $release->rid),
+		);
+
+		$this->_cm->delete_release($release->rid);
+		$this->assertContains($expected, $this->_cm->fetch_log());
 	}
 
 	public function testInabilityFetchReleaseVersionsAnonymous() {
@@ -843,7 +932,22 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testRevertReleaseEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$version           = end($this->cmd_release_fixt[$this->_release_status_mapping[$this->_has_versions['rid']]]);
+		$current = reset($this->cmd_release_fixt[$this->_release_status_mapping[$this->_has_versions['rid']]]);
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_RESTORE,
+			'data' => sprintf("Release %d restored from version %d to %d", $current->rid, $current->version, $version->version),
+		);
+
+		$this->_cm->revert_release($version->rid, $version->version);
+		var_dump($expected, $this->_cm->fetch_log());
+		$this->assertContains($expected, $this->_cm->fetch_log());
 	}
 
 	public function testInabilityCreateNewTriggerAnonymous() {
@@ -872,7 +976,7 @@ class ControlModelTest extends CIUnit_TestCase {
 			'syntax'  => 'Some syntax',
 		);
 		$expected          = (object)$trigger;
-		$expected->tid     = $this->_max_tid + 1;
+		$expected->tid     = $this->_max_id['tid'] + 1;
 		$expected->version = 1;
 		$this->_login();
 
@@ -1017,7 +1121,7 @@ class ControlModelTest extends CIUnit_TestCase {
 			'pdesc' => 'Description',
 		);
 		$expected          = (object)$data;
-		$expected->pid     = $this->_max_pid + 1;
+		$expected->pid     = $this->_max_id['pid'] + 1;
 		$expected->version = 1;
 		$expected->status  = 1;
 

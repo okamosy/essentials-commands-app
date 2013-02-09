@@ -109,7 +109,7 @@ $autoload['language'] = array();
 |
 */
 
-$autoload['model'] = array('Release_model', 'Release_Trigger_Map_model', 'Trigger_model', 'Trigger_Perm_Map_model', 'Perm_model', 'Command_model');
+$autoload['model'] = array('Release_model', 'Release_Trigger_Map_model', 'Trigger_model', 'Trigger_Perm_Map_model', 'Perm_model', 'Command_model', 'Log_model');
 
 
 /* End of file autoload.php */

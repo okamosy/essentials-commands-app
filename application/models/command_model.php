@@ -14,19 +14,13 @@ class Command_model extends CI_Model {
 	 * @return boolean true if the user is logged in, false otherwise
 	 */
 	public function is_authenticated() {
-		if(!$this->input->cookie('cmd_session')) {
-			return FALSE;
-		}
-
-		if(!isset($this->_ci->session)) {
-			$this->_ci->load->library('session');
-		}
-
-		$user = $this->_ci->session->userdata('user');
+		$user = $this->_fetch_user();
 
 		// If the user is not logged in...make sure there's no session
 		if(empty($user)) {
-			$this->_ci->session->sess_destroy();
+			if(isset($this->_ci->session)) {
+				$this->_ci->session->sess_destroy();
+			}
 			return FALSE;
 		}
 		return TRUE;
@@ -47,6 +41,7 @@ class Command_model extends CI_Model {
 		$user = $this->_ci->User_model->fetch($username, $password);
 
 		if(empty($user)) {
+			$this->_log_event(Log_model::EVENT_INVALID_LOGIN, 'Invalid login attempt: '.$username);
 			return FALSE;
 		}
 
@@ -55,6 +50,8 @@ class Command_model extends CI_Model {
 		}
 
 		$this->_ci->session->set_userdata('user', $user);
+		$this->_log_event(Log_model::EVENT_LOGIN);
+
 		return TRUE;
 	}
 
@@ -67,8 +64,15 @@ class Command_model extends CI_Model {
 		if(!isset($this->_ci->session)) {
 			$this->_ci->load->library('session');
 		}
+
+		$user = $this->_fetch_user();
+		if(!empty($user)) {
+			$this->_log_event(Log_model::EVENT_LOGOUT);
+		}
+
         $this->_ci->session->unset_userdata('user');
 		$this->_ci->session->sess_destroy();
+
 	}
 
 	/**
@@ -256,6 +260,8 @@ class Command_model extends CI_Model {
                 throw new Exception('release clone failed');
             }
 
+	        $this->_log_event(Log_model::EVENT_INSERT, sprintf("Release '%s' cloned to '%s'", $release->name, $new_release->name));
+
             foreach($map_list as $map) {
                 $new_trigger = $this->_ci->Trigger_model->clone_trigger($map->tid, $map->t_version);
                 if(empty($new_trigger) ||
@@ -301,7 +307,13 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		$result =  $this->_ci->Release_model->edit($rid, $data);
+		if($result =  $this->_ci->Release_model->edit($rid, $data)) {
+			$changes = array();
+			foreach($data as $key => $value) {
+				$changes[] = sprintf("%s '%s' => '%s'", $key, $release->{$key}, $value);
+			}
+			$this->_log_event(Log_model::EVENT_EDIT, sprintf("Release %d edited: %s", $release->rid, implode(', ', $changes)));
+		}
 		return !empty($result) ? $result : $release;
 	}
 
@@ -322,7 +334,9 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		$result = $this->_ci->Release_model->update_status($rid, $status);
+		if($result = $this->_ci->Release_model->update_status($rid, $status)) {
+			$this->_log_event(Log_model::EVENT_EDIT, sprintf("Release %d status changed: '%s' => '%s'", $release->rid, $release->status, $result->status));
+		}
 		return !empty($result) ? $result : $release;
 	}
 
@@ -339,7 +353,11 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		return $this->_ci->Release_model->delete($rid);
+		if($release = $this->_ci->Release_model->delete($rid)) {
+			$this->_log_event(Log_model::EVENT_DELETE, sprintf("Release %d deleted", $release->rid));
+		}
+
+		return $release;
 	}
 
 	/**
@@ -374,7 +392,11 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		return $this->_ci->Release_model->revert($rid, $version);
+		if($result = $this->_ci->Release_model->revert($rid, $version)) {
+			$this->_log_event(Log_model::EVENT_RESTORE, sprintf("Release %d restored from version %d to %d", $release->rid, $release->version, $version));
+		}
+
+		return $result;
 	}
 
 	/**
@@ -796,6 +818,28 @@ class Command_model extends CI_Model {
 			default:
 				return FALSE;
 		}
+	}
+
+	public function fetch_log() {
+		return $this->_ci->Log_model->fetch();
+	}
+
+	private function _fetch_user() {
+		if(!isset($this->_ci->session)) {
+			if(!$this->input->cookie('cmd_session')) {
+				return FALSE;
+			}
+			$this->_ci->load->library('session');
+		}
+
+		return $this->_ci->session->userdata('user');
+	}
+
+	private function _log_event($event, $data = '') {
+		$user = $this->_fetch_user();
+		$uid = empty($user) ? 0 : $user->uid;
+
+		$this->_ci->Log_model->insert(array('uid' => $uid, 'event' => $event, 'data' => $data));
 	}
 
 	private function _search_trigger($text, $release) {
