@@ -6,6 +6,7 @@
 
 class LogModelTest extends CIUnit_TestCase {
 	private $_lm;
+	private $_max_lid;
 
 	public function __construct($name = NULL, array $data = array(), $dataName = '') {
 		parent::__construct($name, $data, $dataName);
@@ -27,6 +28,7 @@ class LogModelTest extends CIUnit_TestCase {
 		$this->cmd_user_fixt = $list;
 
 		$list = array();
+		$this->_max_lid = 0;
 		foreach ($this->cmd_log_fixt as $log) {
 			$username = !empty($this->cmd_user_fixt[$log['uid']]) ? $this->cmd_user_fixt[$log['uid']]->username : 'Anonymous';
 			$list[]   = (object)array(
@@ -36,6 +38,8 @@ class LogModelTest extends CIUnit_TestCase {
 				'event'     => $log['event'],
 				'data'      => $log['data'],
 			);
+
+			$this->_max_lid = ($log['lid'] > $this->_max_lid) ? $log['lid'] : $this->_max_lid;
 		}
 		$this->cmd_log_fixt = array_reverse($list);
 	}
@@ -71,43 +75,44 @@ class LogModelTest extends CIUnit_TestCase {
 	}
 
 	public function testAbilityInsertLogValidEvent() {
-		$expected = array_slice($this->cmd_log_fixt, 0, 9);
 		$user     = $this->_fetch_user();
 		$event    = array(
-			'lid'       => count($this->cmd_log_fixt) + 1,
 			'uid'       => $user->uid,
-			'timestamp' => time(),
 			'event'     => Log_model::EVENT_LOGIN,
 			'data'      => 'Some test data',
 		);
-
-		$this->_lm->insert($event);
-
-		$event['username'] = $user->username;
-		unset($event['uid']);
-		array_unshift($expected, (object)$event);
-
-		$this->assertEquals($expected, $this->_lm->fetch());
-	}
-
-	public function testAbiltiyInsertLogInvalidEvent() {
-		$expected = array_slice($this->cmd_log_fixt, 0, 9);
-		$user     = $this->_fetch_user();
-		$event    = array(
-			'lid'       => count($this->cmd_log_fixt) + 1,
-			'uid'       => $user->uid,
+		$expected = (object)array(
+			'lid' => $this->_max_lid + 1,
 			'timestamp' => time(),
-			'event'     => 'bad event',
-			'data'      => 'Some test data',
+			'username' => $user->username,
+			'event' => $event['event'],
+			'data' => $event['data'],
 		);
 
 		$this->_lm->insert($event);
 
-		$event['username'] = $user->username;
-		$event['event']    = Log_model::EVENT_UNDEFINED;
-		unset($event['uid']);
-		array_unshift($expected, (object)$event);
+		$log = $this->_lm->fetch();
+		$this->assertEquals($expected, reset($log));
+	}
 
-		$this->assertEquals($expected, $this->_lm->fetch());
+	public function testAbilityInsertLogInvalidEvent() {
+		$user     = $this->_fetch_user();
+		$event    = array(
+			'uid'       => $user->uid,
+			'event'     => 'bad event',
+			'data'      => 'Some test data',
+		);
+		$expected = (object)array(
+			'lid' => $this->_max_lid+1,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_UNDEFINED,
+			'data' => $event['data'],
+		);
+
+		$this->_lm->insert($event);
+		$log = $this->_lm->fetch();
+
+		$this->assertEquals($expected, reset($log));
 	}
 }
