@@ -336,8 +336,16 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertTrue($this->_cm->authenticate($user->username, $user->password));
 	}
 
+	public function testValidLoginEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testInabilityLoginInvalidCredentials() {
 		$this->assertFalse($this->_cm->authenticate('invalid', 'user'));
+	}
+
+	public function testInvalidLoginEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testLoginSetsSession() {
@@ -358,6 +366,10 @@ class ControlModelTest extends CIUnit_TestCase {
 
 		$this->_cm->logout();
 		$this->assertFalse($this->CI->session->userdata('user'));
+	}
+
+	public function testLogoutEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testAbilityLogoutNotLoggedIn() {
@@ -678,6 +690,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertEquals(count($triggers), count($this->_cm->fetch_triggers($clone->rid)));
 	}
 
+	public function testCloneReleaseEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testAbilityCloneUnpublishedReleaseAuthenticated() {
 		$release        = $this->_fetch_release(ESS_UNPUBLISHED);
 		$clone          = clone $release;
@@ -736,6 +752,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertFalse($this->_cm->edit_release($release->rid, array('name' => 'Edited Name')));
 	}
 
+	public function testEditReleaseEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testInabilityChangeReleaseStatusAnonymous() {
 		$release = $this->_fetch_release(ESS_PUBLISHED);
 		$this->_cm->logout();
@@ -761,6 +781,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertFalse($this->_cm->update_release_status($release->rid, ESS_PUBLISHED));
 	}
 
+	public function testChangeReleaseStatusEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testInabilityDeleteReleaseAnonymous() {
 		$release = $this->_fetch_release(ESS_PUBLISHED);
 		$this->_cm->logout();
@@ -776,6 +800,10 @@ class ControlModelTest extends CIUnit_TestCase {
 
 		$this->assertEquals($release, $this->_cm->delete_release($release->rid));
 		$this->assertFalse($this->_cm->fetch_release($release->rid));
+	}
+
+	public function testDeleteReleaseEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testInabilityFetchReleaseVersionsAnonymous() {
@@ -814,6 +842,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertEquals($expected, $this->_cm->revert_release($version->rid, $version->version));
 	}
 
+	public function testRevertReleaseEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testInabilityCreateNewTriggerAnonymous() {
 		$release = $this->_fetch_release(ESS_PUBLISHED);
 		$trigger = array(
@@ -845,6 +877,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->_login();
 
 		$this->assertEquals($expected, $this->_cm->create_trigger($release->rid, $trigger));
+	}
+
+	public function testCreateTriggerEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testInabilityEditTriggerAnonymous() {
@@ -890,6 +926,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertEquals($expected, $this->_cm->fetch_permissions($release->rid, $trigger->tid));
 	}
 
+	public function testEditTriggerEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testInabilityDeleteTriggerAnonymous() {
 		$release = $this->_fetch_release(ESS_PUBLISHED);
 		$trigger = reset($this->_cm->fetch_triggers($release->rid));
@@ -918,6 +958,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertEmpty($this->_cm->fetch_permissions($release->rid,
 		                                                 array('tid'       => $deleted->tid,
 		                                                       't_version' => $deleted->version)));
+	}
+
+	public function testDeleteTriggerEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testInabilityRevertTriggerAnonymous() {
@@ -949,6 +993,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertEquals($expected, $this->_cm->fetch_permissions($release->rid, $reverted->tid));
 	}
 
+	public function testRevertTriggerEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testInabilityCreateNewPermissionAnonymous() {
 		$release = $this->_fetch_release(ESS_PUBLISHED);
 		$trigger = reset($this->_cm->fetch_triggers($release->rid));
@@ -976,6 +1024,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->_login();
 
 		$this->assertEquals($expected, $this->_cm->create_permission($release->rid, $trigger->tid, $data));
+	}
+
+	public function testCreatePermissionEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testInabilityEditPermissionAnonymous() {
@@ -1023,6 +1075,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		$this->assertEquals($perms, $this->_cm->fetch_permissions($release->rid, $trigger->tid));
 	}
 
+	public function testEditPermissionEventIsLogged() {
+		$this->markTestIncomplete();
+	}
+
 	public function testInabilityDeletePermissionAnonymous() {
 		$release = $this->_fetch_release(ESS_PUBLISHED);
 		$trigger = reset($this->_cm->fetch_triggers($release->rid));
@@ -1043,6 +1099,10 @@ class ControlModelTest extends CIUnit_TestCase {
 
 		$this->assertEquals($perm, $this->_cm->delete_permission($release->rid, $trigger->tid, $perm->pid));
 		$this->assertEquals($perms, $this->_cm->fetch_permissions($release->rid, $trigger->tid));
+	}
+
+	public function testDeletePermissionEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testInabilityRevertPermissionAnonymous() {
@@ -1088,6 +1148,10 @@ class ControlModelTest extends CIUnit_TestCase {
 		}
 
 		$this->assertEquals($expected, $this->_cm->fetch_permissions($release->rid, $trigger->tid));
+	}
+
+	public function testRevertPermissionEventIsLogged() {
+		$this->markTestIncomplete();
 	}
 
 	public function testSearchReturnsMatchingTrigger() {
