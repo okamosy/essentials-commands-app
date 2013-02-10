@@ -416,15 +416,26 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		$trigger = $this->_ci->Trigger_model->insert($data);
-		if(empty($trigger)) {
+		try {
+			$this->db->trans_start();
+
+			$trigger = $this->_ci->Trigger_model->insert($data);
+			if(empty($trigger)) {
+				throw new Exception('Failed to create new trigger');
+			}
+
+			if(!$this->_ci->Release_Trigger_Map_model->insert($rid, $trigger->tid, $trigger->version)) {
+				throw new Exception('Failed to create new RT Mapping');
+			}
+
+			$this->_log_event(Log_model::EVENT_INSERT, sprintf("New Trigger '%s' added to Release '%s' (rid %d)", $trigger->trigger, $release->name, $release->rid));
+		}
+		catch(Exception $e) {
+			$this->db->trans_rollback();
 			return FALSE;
 		}
 
-		if(!$this->_ci->Release_Trigger_Map_model->insert($rid, $trigger->tid, $trigger->version)) {
-			return FALSE;
-		}
-
+		$this->db->trans_commit();
 		return $trigger;
 	}
 
@@ -450,7 +461,7 @@ class Command_model extends CI_Model {
 		if(empty($trigger_list)) {
 			return FALSE;
 		}
-		$old_trigger = $trigger_list[0];
+		$old_trigger = reset($trigger_list);
 
 		try {
 			$this->db->trans_begin();
@@ -475,6 +486,12 @@ class Command_model extends CI_Model {
 					}
 				}
 			}
+
+			$message = array();
+			foreach($data as $key => $value) {
+				$message[] = sprintf("%s: '%s' => '%s'", $key, $old_trigger->{$key}, $value);
+			}
+			$this->_log_event(Log_model::EVENT_EDIT, sprintf("Trigger %d for Release '%s' (rid: %d): %s", $old_trigger->tid, $release->name, $release->rid, implode('; ', $message)));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
@@ -506,7 +523,7 @@ class Command_model extends CI_Model {
 		if(empty($trigger_list)) {
 			return FALSE;
 		}
-		$trigger = $trigger_list[0];
+		$trigger = reset($trigger_list);
 
         $this->db->trans_begin();
 		try {
@@ -520,6 +537,8 @@ class Command_model extends CI_Model {
 					throw new Exception();
 				}
 			}
+
+			$this->_log_event(Log_model::EVENT_DELETE, sprintf("Trigger '%s' (tid: %d) from Release '%s' (rid: %d)", $trigger->trigger, $trigger->tid, $release->name, $release->rid));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
@@ -570,6 +589,10 @@ class Command_model extends CI_Model {
 					throw new Exception('failed to update tpm');
 				}
 			}
+
+			$this->_log_event(Log_model::EVENT_RESTORE,
+			                  sprintf("Trigger %d from Release '%s' (rid: %d) reverted from version %d to %d",
+			                          $trigger->tid, $release->name, $release->rid, $current_trigger->t_version, $version));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();

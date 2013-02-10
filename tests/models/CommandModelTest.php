@@ -344,8 +344,7 @@ class ControlModelTest extends CIUnit_TestCase {
 			'data' =>  '',
 		);
 
-		$log = $this->_cm->fetch_log();
-		$this->assertEquals($expected, reset($log));
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityLoginInvalidCredentials() {
@@ -363,7 +362,7 @@ class ControlModelTest extends CIUnit_TestCase {
 		);
 
 		$this->_cm->authenticate($username, 'user');
-		$this->assertEquals($expected, reset($this->_cm->fetch_log()));
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testLoginSetsSession() {
@@ -400,7 +399,7 @@ class ControlModelTest extends CIUnit_TestCase {
 
 		$this->_cm->logout();
 
-		$this->assertEquals($expected, reset($this->_cm->fetch_log()));
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testAbilityLogoutNotLoggedIn() {
@@ -737,7 +736,7 @@ class ControlModelTest extends CIUnit_TestCase {
 
 		$this->_cm->clone_release($release->rid, array('name' => $new_name));
 
-		$this->assertContains($expected, $this->_cm->fetch_log());
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testAbilityCloneUnpublishedReleaseAuthenticated() {
@@ -815,7 +814,7 @@ class ControlModelTest extends CIUnit_TestCase {
 
 		$this->_cm->edit_release($release->rid, array('name' => $name));
 
-		$this->assertContains($expected, $this->_cm->fetch_log());
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityChangeReleaseStatusAnonymous() {
@@ -858,7 +857,8 @@ class ControlModelTest extends CIUnit_TestCase {
 		);
 
 		$this->_cm->update_release_status($release->rid, $status);
-		$this->assertContains($expected, $this->_cm->fetch_log());
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityDeleteReleaseAnonymous() {
@@ -892,7 +892,8 @@ class ControlModelTest extends CIUnit_TestCase {
 		);
 
 		$this->_cm->delete_release($release->rid);
-		$this->assertContains($expected, $this->_cm->fetch_log());
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityFetchReleaseVersionsAnonymous() {
@@ -946,8 +947,8 @@ class ControlModelTest extends CIUnit_TestCase {
 		);
 
 		$this->_cm->revert_release($version->rid, $version->version);
-		var_dump($expected, $this->_cm->fetch_log());
-		$this->assertContains($expected, $this->_cm->fetch_log());
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityCreateNewTriggerAnonymous() {
@@ -984,7 +985,29 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testCreateTriggerEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release           = $this->_fetch_release(ESS_PUBLISHED);
+		$trigger           = array(
+			'cat'     => 'General',
+			'trigger' => 'trigger',
+			'alias'   => 'alias',
+			'desc'    => 'Some description',
+			'instr'   => 'Some instructions',
+			'syntax'  => 'Some syntax',
+		);
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_INSERT,
+			'data' => sprintf("New Trigger '%s' added to Release '%s' (rid %d)", $trigger['trigger'], $release->name, $release->rid),
+		);
+
+		$this->_cm->create_trigger($release->rid, $trigger);
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityEditTriggerAnonymous() {
@@ -1031,7 +1054,25 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testEditTriggerEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release           = $this->_fetch_release(ESS_PUBLISHED);
+		$trigger           = reset($this->_cm->fetch_triggers($release->rid));
+		$data              = array(
+			'trigger' => 'Edited Value',
+		);
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_EDIT,
+			'data' => sprintf("Trigger %d for Release '%s' (rid: %d): %s: '%s' => '%s'", $trigger->tid, $release->name, $release->rid, 'trigger', $trigger->trigger, $data['trigger']),
+		);
+
+		$this->_cm->edit_trigger($release->rid, $trigger->tid, $data);
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityDeleteTriggerAnonymous() {
@@ -1065,7 +1106,22 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testDeleteTriggerEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release  = $this->_fetch_release(ESS_PUBLISHED);
+		$trigger = reset($this->_cm->fetch_triggers($release->rid));
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_DELETE,
+			'data' => sprintf("Trigger '%s' (tid: %d) from Release '%s' (rid: %d)", $trigger->trigger, $trigger->tid, $release->name, $release->rid),
+		);
+
+		$this->_cm->delete_trigger($release->rid, $trigger->tid);
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), "Expected log event not found");
 	}
 
 	public function testInabilityRevertTriggerAnonymous() {
@@ -1098,7 +1154,23 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testRevertTriggerEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$trigger           = end($this->cmd_trigger_fixt[$this->_has_versions['tid']->tid]);
+		$current_trigger = reset($this->cmd_trigger_fixt[$this->_has_versions['tid']->tid]);
+		$release           = $this->_fetch_release_by_rid($this->_has_versions['tid']->rid);
+
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_RESTORE,
+			'data' => sprintf("Trigger %d from Release '%s' (rid: %d) reverted from version %d to %d", $trigger->tid, $release->name, $release->rid, $current_trigger->version, $trigger->version),
+		);
+
+		$this->_cm->revert_trigger($release->rid, $trigger->tid, $trigger->version);
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityCreateNewPermissionAnonymous() {
