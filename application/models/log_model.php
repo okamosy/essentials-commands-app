@@ -2,16 +2,16 @@
 
 class Log_model extends CI_Model {
 	public static $events = array(
-		self::EVENT_UNDEFINED,    
-		self::EVENT_LOGIN,        
-		self::EVENT_LOGOUT,       
-		self::EVENT_INSERT,       
-		self::EVENT_EDIT,         
-		self::EVENT_DELETE,       
-		self::EVENT_RESTORE,      
-		self::EVENT_PUBLISH,      
-		self::EVENT_UNPUBLISH,    
-		self::EVENT_ERROR,        
+		self::EVENT_UNDEFINED,
+		self::EVENT_LOGIN,
+		self::EVENT_LOGOUT,
+		self::EVENT_INSERT,
+		self::EVENT_EDIT,
+		self::EVENT_DELETE,
+		self::EVENT_RESTORE,
+		self::EVENT_PUBLISH,
+		self::EVENT_UNPUBLISH,
+		self::EVENT_ERROR,
 		self::EVENT_INVALID_LOGIN,
 	);
 
@@ -40,6 +40,7 @@ class Log_model extends CI_Model {
 		if(!in_array($event['event'], self::$events)) {
 			$event['event'] = self::EVENT_UNDEFINED;
 		}
+		$event['timestamp'] = time();
 
 		$this->db->insert('cmd_log', $event);
 	}

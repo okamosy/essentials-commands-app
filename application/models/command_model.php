@@ -14,19 +14,13 @@ class Command_model extends CI_Model {
 	 * @return boolean true if the user is logged in, false otherwise
 	 */
 	public function is_authenticated() {
-		if(!$this->input->cookie('cmd_session')) {
-			return FALSE;
-		}
-
-		if(!isset($this->_ci->session)) {
-			$this->_ci->load->library('session');
-		}
-
-		$user = $this->_ci->session->userdata('user');
+		$user = $this->_fetch_user();
 
 		// If the user is not logged in...make sure there's no session
 		if(empty($user)) {
-			$this->_ci->session->sess_destroy();
+			if(isset($this->_ci->session)) {
+				$this->_ci->session->sess_destroy();
+			}
 			return FALSE;
 		}
 		return TRUE;
@@ -47,6 +41,7 @@ class Command_model extends CI_Model {
 		$user = $this->_ci->User_model->fetch($username, $password);
 
 		if(empty($user)) {
+			$this->_log_event(Log_model::EVENT_INVALID_LOGIN, 'Invalid login attempt: '.$username);
 			return FALSE;
 		}
 
@@ -55,6 +50,8 @@ class Command_model extends CI_Model {
 		}
 
 		$this->_ci->session->set_userdata('user', $user);
+		$this->_log_event(Log_model::EVENT_LOGIN);
+
 		return TRUE;
 	}
 
@@ -67,8 +64,15 @@ class Command_model extends CI_Model {
 		if(!isset($this->_ci->session)) {
 			$this->_ci->load->library('session');
 		}
+
+		$user = $this->_fetch_user();
+		if(!empty($user)) {
+			$this->_log_event(Log_model::EVENT_LOGOUT);
+		}
+
         $this->_ci->session->unset_userdata('user');
 		$this->_ci->session->sess_destroy();
+
 	}
 
 	/**
@@ -177,7 +181,7 @@ class Command_model extends CI_Model {
 		}
 
 		return array(
-			'trigger' => $this->_ci->Trigger_model->fetch($trigger_version->tid, $trigger_version->t_version),
+			'trigger' => $this->_ci->Trigger_model->fetch($trigger_version->tid, $trigger_version->version),
 			'permissions' => $this->fetch_permissions($rid, $tid),
 		);
 	}
@@ -210,7 +214,7 @@ class Command_model extends CI_Model {
 		$perm_list = array();
 		$filter = array(
 			'tid'                         => $trigger->tid,
-			't_version'                   => $trigger->t_version,
+			't_version'                   => $trigger->version,
 			'cmd_trigger_perm_map.status' => 1,
 		);
 		$query = $this->db->select('cmd_perm.*')
@@ -255,6 +259,8 @@ class Command_model extends CI_Model {
             if(empty($new_release)) {
                 throw new Exception('release clone failed');
             }
+
+	        $this->_log_event(Log_model::EVENT_INSERT, sprintf("Release '%s' cloned to '%s'", $release->name, $new_release->name));
 
             foreach($map_list as $map) {
                 $new_trigger = $this->_ci->Trigger_model->clone_trigger($map->tid, $map->t_version);
@@ -301,7 +307,13 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		$result =  $this->_ci->Release_model->edit($rid, $data);
+		if($result =  $this->_ci->Release_model->edit($rid, $data)) {
+			$changes = array();
+			foreach($data as $key => $value) {
+				$changes[] = sprintf("%s '%s' => '%s'", $key, $release->{$key}, $value);
+			}
+			$this->_log_event(Log_model::EVENT_EDIT, sprintf("Release %d edited: %s", $release->rid, implode(', ', $changes)));
+		}
 		return !empty($result) ? $result : $release;
 	}
 
@@ -322,7 +334,9 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		$result = $this->_ci->Release_model->update_status($rid, $status);
+		if($result = $this->_ci->Release_model->update_status($rid, $status)) {
+			$this->_log_event(Log_model::EVENT_EDIT, sprintf("Release %d status changed: '%s' => '%s'", $release->rid, $release->status, $result->status));
+		}
 		return !empty($result) ? $result : $release;
 	}
 
@@ -339,7 +353,11 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		return $this->_ci->Release_model->delete($rid);
+		if($release = $this->_ci->Release_model->delete($rid)) {
+			$this->_log_event(Log_model::EVENT_DELETE, sprintf("Release %d deleted", $release->rid));
+		}
+
+		return $release;
 	}
 
 	/**
@@ -374,7 +392,11 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		return $this->_ci->Release_model->revert($rid, $version);
+		if($result = $this->_ci->Release_model->revert($rid, $version)) {
+			$this->_log_event(Log_model::EVENT_RESTORE, sprintf("Release %d restored from version %d to %d", $release->rid, $release->version, $version));
+		}
+
+		return $result;
 	}
 
 	/**
@@ -394,15 +416,26 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		$trigger = $this->_ci->Trigger_model->insert($data);
-		if(empty($trigger)) {
+		try {
+			$this->db->trans_start();
+
+			$trigger = $this->_ci->Trigger_model->insert($data);
+			if(empty($trigger)) {
+				throw new Exception('Failed to create new trigger');
+			}
+
+			if(!$this->_ci->Release_Trigger_Map_model->insert($rid, $trigger->tid, $trigger->version)) {
+				throw new Exception('Failed to create new RT Mapping');
+			}
+
+			$this->_log_event(Log_model::EVENT_INSERT, sprintf("New Trigger '%s' added to Release '%s' (rid %d)", $trigger->trigger, $release->name, $release->rid));
+		}
+		catch(Exception $e) {
+			$this->db->trans_rollback();
 			return FALSE;
 		}
 
-		if(!$this->_ci->Release_Trigger_Map_model->insert($rid, $trigger->tid, $trigger->version)) {
-			return FALSE;
-		}
-
+		$this->db->trans_commit();
 		return $trigger;
 	}
 
@@ -428,7 +461,7 @@ class Command_model extends CI_Model {
 		if(empty($trigger_list)) {
 			return FALSE;
 		}
-		$old_trigger = $trigger_list[0];
+		$old_trigger = reset($trigger_list);
 
 		try {
 			$this->db->trans_begin();
@@ -453,6 +486,12 @@ class Command_model extends CI_Model {
 					}
 				}
 			}
+
+			$message = array();
+			foreach($data as $key => $value) {
+				$message[] = sprintf("%s: '%s' => '%s'", $key, $old_trigger->{$key}, $value);
+			}
+			$this->_log_event(Log_model::EVENT_EDIT, sprintf("Trigger %d for Release '%s' (rid: %d): %s", $old_trigger->tid, $release->name, $release->rid, implode('; ', $message)));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
@@ -484,10 +523,14 @@ class Command_model extends CI_Model {
 		if(empty($trigger_list)) {
 			return FALSE;
 		}
-		$trigger = $trigger_list[0];
+		$trigger = reset($trigger_list);
 
         $this->db->trans_begin();
 		try {
+			if(!$this->_ci->Trigger_model->delete($trigger->tid)) {
+				throw new Exception('Failed deleting the trigger');
+			}
+
 			if(!$this->_ci->Release_Trigger_Map_model->delete(array('rid' => $rid, 'tid' => $tid))) {
 				throw new Exception();
 			}
@@ -498,6 +541,8 @@ class Command_model extends CI_Model {
 					throw new Exception();
 				}
 			}
+
+			$this->_log_event(Log_model::EVENT_DELETE, sprintf("Trigger '%s' (tid: %d) from Release '%s' (rid: %d)", $trigger->trigger, $trigger->tid, $release->name, $release->rid));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
@@ -540,7 +585,7 @@ class Command_model extends CI_Model {
 				throw new Exception('failed to update rtm');
 			}
 
-			$mapping = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $tid, 't_version' => $current_trigger->t_version));
+			$mapping = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $tid, 't_version' => $current_trigger->version));
 			foreach($mapping as $map) {
 				$new_map = clone $map;
 				$new_map->t_version = $trigger->version;
@@ -548,6 +593,10 @@ class Command_model extends CI_Model {
 					throw new Exception('failed to update tpm');
 				}
 			}
+
+			$this->_log_event(Log_model::EVENT_RESTORE,
+			                  sprintf("Trigger %d from Release '%s' (rid: %d) reverted from version %d to %d",
+			                          $trigger->tid, $release->name, $release->rid, $current_trigger->version, $version));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
@@ -580,7 +629,7 @@ class Command_model extends CI_Model {
 		if(empty($trigger_list)) {
 			return FALSE;
 		}
-		$trigger = $trigger_list[0];
+		$trigger = reset($trigger_list);
 
 		try {
 			$this->db->trans_begin();
@@ -600,6 +649,10 @@ class Command_model extends CI_Model {
 			if(!$this->_ci->Trigger_Perm_Map_model->insert($map)) {
 				throw new Exception();
 			}
+
+			$this->_log_event(Log_model::EVENT_INSERT,
+			                  sprintf("Permission '%s' added to Release '%s' (rid: %d), Trigger '%s' (tid: %d)",
+			                          $data['perm'], $release->name, $release->rid, $trigger->trigger, $trigger->tid));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
@@ -633,7 +686,7 @@ class Command_model extends CI_Model {
 		if(empty($trigger_list)) {
 			return FALSE;
 		}
-		$trigger = $trigger_list[0];
+		$trigger = reset($trigger_list);
 
 		$mapping = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $trigger->tid, 't_version' => $trigger->version));
 		if(empty($mapping) || empty($mapping[$pid])) {
@@ -649,16 +702,23 @@ class Command_model extends CI_Model {
 		try {
 			$this->db->trans_begin();
 
-			$perm = $this->_ci->Perm_model->edit($perm->pid, $perm->version, $data);
-			if(empty($perm)) {
+			$updated_perm = $this->_ci->Perm_model->edit($perm->pid, $perm->version, $data);
+			if(empty($updated_perm)) {
 				throw new Exception();
 			}
 
 			$updated_map = clone $map;
-			$updated_map->p_version = $perm->version;
+			$updated_map->p_version = $updated_perm->version;
 			if(!$this->_ci->Trigger_Perm_Map_model->edit($updated_map, (array)$map)) {
 				throw new Exception();
 			}
+
+			$message = array();
+			foreach($data as $key => $value) {
+				$message[] = sprintf("%s: '%s' => '%s'", $key, $perm->{$key}, $value);
+			}
+			$this->_log_event(Log_model::EVENT_EDIT, sprintf("Permission %d for Release '%s' (rid: %d), Trigger '%s' (tid: %d): %s",
+			                                                 $perm->pid, $release->name, $release->rid, $trigger->trigger, $trigger->tid, implode(', ', $message)));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
@@ -666,7 +726,7 @@ class Command_model extends CI_Model {
 		}
 
 		$this->db->trans_commit();
-		return $perm;
+		return $updated_perm;
 	}
 
 	/**
@@ -693,7 +753,7 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
-		$mapping = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $trigger->tid, 't_version' => $trigger->t_version));
+		$mapping = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $trigger->tid, 't_version' => $trigger->version));
 		if(empty($mapping[$pid])) {
 			return FALSE;
 		}
@@ -701,14 +761,24 @@ class Command_model extends CI_Model {
 
 		$perm = $this->_ci->Perm_model->fetch($pid, $map->p_version);
 
-        $this->db->trans_begin();
 		try {
-			if(!$this->_ci->Trigger_Perm_Map_model->delete((array)$map)) {
-				throw new Exception();
+			$this->db->trans_begin();
+
+			if(!$this->_ci->Perm_model->delete($perm->pid, $perm->version)) {
+				throw new Exception('Failed to delete the specified permission');
 			}
+
+			if(!$this->_ci->Trigger_Perm_Map_model->delete((array)$map)) {
+				throw new Exception('Filed to update TPM');
+			}
+
+			$this->_log_event(Log_model::EVENT_DELETE,
+			                  sprintf("Permission '%s' (pid: %d) deleted from Release '%s' (rid: %d), Trigger '%s' (tid: %d)",
+			                          $perm->perm, $perm->pid, $release->name, $release->rid, $trigger->trigger, $trigger->tid));
 		}
 		catch (Exception $e) {
 			$this->db->trans_rollback();
+			echo $e->getMessage();
 			return FALSE;
 		}
 
@@ -741,6 +811,11 @@ class Command_model extends CI_Model {
 			return FALSE;
 		}
 
+		$current_perm = $this->_ci->Perm_model->fetch($pid);
+		if(empty($current_perm)) {
+			return FALSE;
+		}
+
 		try {
 			$this->db->trans_begin();
 
@@ -751,12 +826,12 @@ class Command_model extends CI_Model {
 
 			$updated_map = array(
 				'tid'       => $trigger->tid,
-				't_version' => $trigger->t_version,
+				't_version' => $trigger->version,
 				'pid'       => $perm->pid,
 				'p_version' => $perm->version,
 			);
 
-			$current_map = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $trigger->tid, 't_version' => $trigger->t_version, 'pid' => $pid));
+			$current_map = $this->_ci->Trigger_Perm_Map_model->fetch(array('tid' => $trigger->tid, 't_version' => $trigger->version, 'pid' => $pid));
 			if(empty($current_map[$pid])) {
 				if(!$this->_ci->Trigger_Perm_Map_model->insert($updated_map)) {
 					throw new Exception('Failed updating empty TPM');
@@ -766,6 +841,9 @@ class Command_model extends CI_Model {
 				throw new Exception('Failed updating TPM');
 			}
 
+			$this->_log_event(Log_model::EVENT_RESTORE,
+			                  sprintf("Permission %d for Release '%s' (rid: %d), Trigger '%s' (tid: %d) restored from version %d to %d",
+			                          $perm->pid, $release->name, $release->rid, $trigger->trigger, $trigger->tid, $current_perm->version, $version));
 		}
 		catch(Exception $e) {
 			$this->db->trans_rollback();
@@ -796,6 +874,28 @@ class Command_model extends CI_Model {
 			default:
 				return FALSE;
 		}
+	}
+
+	public function fetch_log() {
+		return $this->_ci->Log_model->fetch();
+	}
+
+	private function _fetch_user() {
+		if(!isset($this->_ci->session)) {
+			if(!$this->input->cookie('cmd_session')) {
+				return FALSE;
+			}
+			$this->_ci->load->library('session');
+		}
+
+		return $this->_ci->session->userdata('user');
+	}
+
+	private function _log_event($event, $data = '') {
+		$user = $this->_fetch_user();
+		$uid = empty($user) ? 0 : $user->uid;
+
+		$this->_ci->Log_model->insert(array('uid' => $uid, 'event' => $event, 'data' => $data));
 	}
 
 	private function _search_trigger($text, $release) {
@@ -932,7 +1032,7 @@ class Command_model extends CI_Model {
 		$mapping = $this->_ci->Release_Trigger_Map_model->fetch($rid);
 		foreach($mapping as $trigger) {
 			if($trigger->tid == $tid) {
-				return $trigger;
+				return $this->_ci->Trigger_model->fetch($trigger->tid, $trigger->t_version);
 			}
 		}
 
