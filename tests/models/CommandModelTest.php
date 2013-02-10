@@ -145,7 +145,11 @@ class ControlModelTest extends CIUnit_TestCase {
 			}
 		}
 
-		return $perms;
+		$result = array();
+		foreach($perms as $pid => $perm) {
+			$result[$pid] = array_reverse($perm);
+		}
+		return $result;
 	}
 
 	private function _initialize_rt_mapping() {
@@ -1203,7 +1207,25 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testCreatePermissionEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release           = $this->_fetch_release(ESS_PUBLISHED);
+		$trigger           = reset($this->_cm->fetch_triggers($release->rid));
+		$data              = array(
+			'perm'  => 'perm',
+			'pdesc' => 'Description',
+		);
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_INSERT,
+			'data' => sprintf("Permission '%s' added to Release '%s' (rid: %d), Trigger '%s' (tid: %d)", $data['perm'], $release->name, $release->rid, $trigger->trigger, $trigger->tid),
+		);
+
+		$this->_cm->create_permission($release->rid, $trigger->tid, $data);
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityEditPermissionAnonymous() {
@@ -1252,7 +1274,24 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testEditPermissionEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release       = $this->_fetch_release(ESS_PUBLISHED);
+		$trigger       = reset($this->_cm->fetch_triggers($release->rid));
+		$perm          = reset($this->_fetch_permissions($trigger));
+		$value = 'editedPerm';
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_EDIT,
+			'data' => sprintf("Permission %d for Release '%s' (rid: %d), Trigger '%s' (tid: %d): %s: '%s' => '%s'",
+						$perm->pid, $release->name, $release->rid, $trigger->trigger, $trigger->tid, 'perm', $perm->perm, $value),
+		);
+
+		$this->_cm->edit_permission($release->rid, $trigger->tid, $perm->pid, array('perm' => $value));
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityDeletePermissionAnonymous() {
@@ -1278,7 +1317,23 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testDeletePermissionEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$release = $this->_fetch_release(ESS_PUBLISHED);
+		$trigger = reset($this->_cm->fetch_triggers($release->rid));
+		$perm   = reset($this->_fetch_permissions($trigger));
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_DELETE,
+			'data' => sprintf("Permission '%s' (pid: %d) deleted from Release '%s' (rid: %d), Trigger '%s' (tid: %d)",
+						$perm->perm, $perm->pid, $release->name, $release->rid, $trigger->trigger, $trigger->tid),
+		);
+
+		$this->_cm->delete_permission($release->rid, $trigger->tid, $perm->pid);
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testInabilityRevertPermissionAnonymous() {
@@ -1327,7 +1382,24 @@ class ControlModelTest extends CIUnit_TestCase {
 	}
 
 	public function testRevertPermissionEventIsLogged() {
-		$this->markTestIncomplete();
+		$this->_login();
+		$user = $this->CI->session->userdata('user');
+		$current_perm = reset($this->cmd_perm_fixt[$this->_has_versions['pid']->pid]);
+		$perm    = end($this->cmd_perm_fixt[$this->_has_versions['pid']->pid]);
+		$trigger = $this->_fetch_trigger_by_tid($this->_has_versions['pid']->tid);
+		$release = $this->_fetch_release_from_trigger($trigger->tid);
+		$expected = (object)array(
+			'lid' => $this->_max_id['lid'] + 2,
+			'username' => $user->username,
+			'timestamp' => time(),
+			'event' => Log_model::EVENT_RESTORE,
+			'data' => sprintf("Permission %d for Release '%s' (rid: %d), Trigger '%s' (tid: %d) restored from version %d to %d",
+						$perm->pid, $release->name, $release->rid, $trigger->trigger, $trigger->tid, $current_perm->version, $perm->version),
+		);
+
+		$this->_cm->revert_permission($release->rid, $trigger->tid, $perm->pid, $perm->version);
+
+		$this->assertNotSame(FALSE, array_search($expected, $this->_cm->fetch_log()), 'Expected log event not found');
 	}
 
 	public function testSearchReturnsMatchingTrigger() {
