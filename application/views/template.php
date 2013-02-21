@@ -44,7 +44,7 @@
 
   </header>
   <div role="main">
-    <?php echo $is_logged_in ? anchor('logout', 'Logout', array('id' => 'logout-link')) : ''; ?>
+    <?php echo $is_logged_in ? '<a href="logout" id="logout-link">Logout</a>' : ''; ?>
     <input type="hidden" id="base-url" value="<?php echo base_url(); ?>" />
     <?php $this->load->view($view); ?>
   </div>
