@@ -62,18 +62,5 @@
 		</tr>
 	</thead>
 	<tbody>
-<!--		--><?php //foreach($commands as $row) : ?>
-<!--		<tr>-->
-<!--			<td>--><?php //echo $row->tid; ?><!--</td>-->
-<!--			<td>-->
-<!--				--><?php //echo $is_logged_in ? img(array('src' => 'assets/img/delete.png', 'class' => 'delete-item', 'id' => 'cmd-'.$row->tid)) : ''; ?>
-<!--                <img src="http://essentials3.net/cache/doc/assets/img/round_add.png" class="details-img" alt=""/>-->
-<!--			</td>-->
-<!--			<td>--><?php //echo $row->cat; ?><!--</td>-->
-<!--			<td>--><?php //echo $row->trigger; ?><!--</td>-->
-<!--			<td>--><?php //echo $row->alias; ?><!--</td>-->
-<!--			<td>--><?php //echo $row->desc; ?><!--</td>-->
-<!--			<td>--><?php //echo nl2br(htmlspecialchars($row->syntax)); ?><!--</td>-->
-<!--		--><?php //endforeach; ?>
 	</tbody>
 </table>
