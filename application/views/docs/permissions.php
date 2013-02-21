@@ -1,5 +1,4 @@
 <div id="main-controls">
-	<?php echo anchor('/', 'View Commands Only', array('class' => 'button switch-view')); ?>
 </div>
 <input type="hidden" id="rid" value="<?php echo $release->rid; ?>" />
 

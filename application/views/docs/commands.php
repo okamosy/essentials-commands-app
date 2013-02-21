@@ -1,5 +1,4 @@
 <div id="main-controls">
-	<?php echo anchor('permissions', 'View Permissions Only', array('class' => 'button switch-view')); ?>
 	<input type="hidden" id="rid" value="<?php echo !empty($release->rid) ? $release->rid : 0; ?>" />
 	<?php if($is_logged_in) : ?>
 	<button id="add-command" class="button">Add New Command</button>
