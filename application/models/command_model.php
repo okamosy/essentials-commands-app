@@ -861,8 +861,8 @@ class Command_model extends CI_Model {
 
 		$search_string = $this->db->escape_like_str($text);
 		$release_filter = empty($release) ?
-			sprintf("r.status = '%s'", ESS_DEFAULT) :
-			sprintf("r.status IN ('%s') AND r.name LIKE '%s'",
+			sprintf("release_status = '%s'", ESS_DEFAULT) :
+			sprintf("release_status IN ('%s') AND release_name LIKE '%s'",
 			        implode("','", array(ESS_DEFAULT, ESS_PUBLISHED, ESS_PROMOTED)),
 			        $this->db->escape_like_str($release));
 
@@ -900,16 +900,15 @@ class Command_model extends CI_Model {
 
 	private function _search_trigger($text, $release) {
 		$base_sql = "
-			SELECT r.rid, t.*
+			SELECT r.rid, r.status as release_status, r.name as release_name, t.*
 			FROM cmd_release r
 				JOIN cmd_release_trigger_map rtm ON ( r.rid = rtm.rid )
 				JOIN cmd_trigger t ON ( t.tid = rtm.tid AND t.version = rtm.t_version )
-			WHERE {$release}
-				AND rtm.status =1
+			WHERE rtm.status =1
 				AND t.status =1
 				AND (%s)
 			GROUP BY t.tid
-			ORDER BY t.version DESC";
+			ORDER BY r.version DESC, t.version DESC";
 		$permutations = array(
 			"t.trigger LIKE '%s' OR t.alias LIKE '%s'",
 			"t.trigger LIKE '%%%s%%' OR t.alias LIKE '%%%s%%'",
@@ -925,6 +924,7 @@ class Command_model extends CI_Model {
 			FROM (
 				%s
 			) triggers
+			WHERE {$release}
 			LIMIT %s
 			", rtrim($sql, ' UNION'), MAX_SEARCH_RESULTS);
 
@@ -962,14 +962,13 @@ class Command_model extends CI_Model {
 
 	private function _search_perm($text, $release) {
 		$base_sql = "
-			SELECT p.perm, p.pdesc, t.trigger, t.alias, t.desc, t.instr, t.syntax
+			SELECT r.status as release_status, r.name as release_name, p.perm, p.pdesc, t.trigger, t.alias, t.desc, t.instr, t.syntax
 			FROM cmd_perm p
 			JOIN cmd_trigger_perm_map tpm ON (p.pid=tpm.pid AND p.version=tpm.p_version)
 			JOIN cmd_trigger t ON (t.tid=tpm.tid AND t.version=tpm.t_version)
 			JOIN cmd_release_trigger_map rtm ON (t.tid=rtm.tid AND t.version=rtm.t_version)
 			JOIN cmd_release r ON (r.rid=rtm.rid)
-			WHERE {$release}
-				AND rtm.status =1
+			WHERE rtm.status =1
 				AND tpm.status =1
 				AND t.status =1
 				AND p.status =1
@@ -987,10 +986,11 @@ class Command_model extends CI_Model {
 			$sql .= sprintf("(%s) UNION ", sprintf($base_sql, sprintf($permute, $text, $text)));
 		}
 		$sql = sprintf("
-		SELECT *
+		SELECT `perm`, `pdesc`, `trigger`, `alias`, `desc`, `instr`, `syntax`
 		FROM (
 			%s
 		) perms
+		WHERE {$release}
 		LIMIT %s", rtrim($sql, ' UNION'), MAX_SEARCH_RESULTS);
 
 		$query = $this->db->query($sql);
