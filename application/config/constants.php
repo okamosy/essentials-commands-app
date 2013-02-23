@@ -44,7 +44,7 @@ define('ESS_PROMOTED',    'promoted');
 define('ESS_DEFAULT',     'default');
 
 // Define the maximum number of search results the API will return
-define('MAX_SEARCH_RESULTS', 6);
+define('MAX_SEARCH_RESULTS', 8);
 
 // Define Ajax Request
 define('IS_AJAX', isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest');
